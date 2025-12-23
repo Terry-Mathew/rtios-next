@@ -33,6 +33,13 @@ export const Input: React.FC<InputProps> = ({
 }) => {
     const autoId = useId();
     const inputId = id ?? autoId;
+    const errorId = `${inputId}-error`;
+    const helperId = `${inputId}-helper`;
+
+    const describedBy = [
+        error ? errorId : null,
+        helperText && !error ? helperId : null
+    ].filter(Boolean).join(' ') || undefined;
 
     return (
         <div className="w-full">
@@ -46,6 +53,8 @@ export const Input: React.FC<InputProps> = ({
             )}
             <input
                 id={inputId}
+                aria-describedby={describedBy}
+                aria-invalid={!!error}
                 className={`
                     w-full text-sm font-interstate text-text-primary
                     placeholder-text-placeholder
@@ -58,10 +67,21 @@ export const Input: React.FC<InputProps> = ({
                 {...props}
             />
             {error && (
-                <p className="mt-1.5 text-[10px] text-alert-gap font-interstate">{error}</p>
+                <p
+                    id={errorId}
+                    role="alert"
+                    className="mt-1.5 text-[10px] text-alert-gap font-interstate"
+                >
+                    {error}
+                </p>
             )}
             {helperText && !error && (
-                <p className="mt-1.5 text-[10px] text-text-secondary font-interstate">{helperText}</p>
+                <p
+                    id={helperId}
+                    className="mt-1.5 text-[10px] text-text-secondary font-interstate"
+                >
+                    {helperText}
+                </p>
             )}
         </div>
     );
