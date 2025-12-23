@@ -1,26 +1,181 @@
 @import "tailwindcss";
 
+/* ====== CUSTOM CSS VARIABLES (for non-Tailwind usage) ====== */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Colors */
+  --accent: #059669;
+  --accent-hover: #047857;
+  --surface-base: #0a0a0a;
+  --surface-elevated: #121212;
+  --text-primary: #f0f0f0;
+  --text-secondary: #9a9a9a;
+  --alert-gap: #ff6b6b;
+  --focus-ring: #8B5CF6;
+  
+  /* Fonts */
+  --font-tiempos: var(--font-crimson), 'Crimson Text', 'Georgia', 'Times New Roman', serif;
+  --font-interstate: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ====== TAILWIND V4 CUSTOM UTILITIES ====== */
+@utility bg-accent {
+  background-color: #059669;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@utility bg-accent-hover {
+  background-color: #047857;
+}
+
+@utility bg-surface-base {
+  background-color: #0a0a0a;
+}
+
+@utility bg-surface-elevated {
+  background-color: #121212;
+}
+
+@utility text-accent {
+  color: #059669;
+}
+
+@utility text-white {
+  color: #ffffff;
+}
+
+@utility text-text-primary {
+  color: #f0f0f0;
+}
+
+@utility text-text-secondary {
+  color: #9a9a9a;
+}
+
+@utility text-alert-gap {
+  color: #ff6b6b;
+}
+
+@utility border-accent {
+  border-color: #059669;
+}
+
+@utility font-tiempos {
+  font-family: var(--font-crimson), 'Crimson Text', 'Georgia', 'Times New Roman', serif;
+}
+
+@utility font-interstate {
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Base body styles */
+body {
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: #0a0a0a;
+  color: #f0f0f0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Global scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* ====== ACCESSIBILITY STYLES ====== */
+
+/* Global focus ring for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid #8B5CF6;
+  outline-offset: 2px;
+}
+
+/* Ensure placeholder text is visible */
+::placeholder {
+  color: #9a9a9a;
+  opacity: 1;
+}
+
+/* ====== TYPOGRAPHY IMPROVEMENTS ====== */
+
+/* Better line height for body text */
+p, .text-base, .text-sm {
+  line-height: 1.7;
+}
+
+/* Tighter tracking for uppercase text */
+.uppercase, .tracking-widest {
+  letter-spacing: 0.08em;
+}
+
+/* Heading improvements */
+h1, h2, h3, h4, h5, h6,
+.font-tiempos {
+  font-feature-settings: 'liga' 1, 'kern' 1;
+  letter-spacing: -0.01em;
+}
+
+/* Improve number rendering */
+.font-tiempos {
+  font-variant-numeric: oldstyle-nums;
+}
+
+/* Minimum touch target size for mobile */
+@media (max-width: 1023px) {
+  button,
+  a,
+  input[type="button"],
+  input[type="submit"],
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ====== ANIMATION UTILITIES ====== */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out;
 }
