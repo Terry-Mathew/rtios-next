@@ -6,7 +6,7 @@ import AuthModal from '@/src/components/ui/AuthModal';
 import { useAppStore } from '@/src/stores/appStore';
 
 interface AppShellProps {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }
 
 export const AppShell: React.FC<AppShellProps> = ({ children }) => {
@@ -16,7 +16,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
 
     const handleAuthSuccess = () => {
         setIsAuthModalOpen(false);
-        router.push('/pricing');
+        router.push('/dashboard');
     };
 
     return (

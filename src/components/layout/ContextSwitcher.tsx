@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { UserMenu } from '@/src/components/ui/UserMenu';
 import { JobInfo, SavedResume } from '@/src/types';
 import { ChevronDown, Check } from 'lucide-react';
 
@@ -9,6 +10,33 @@ interface ContextSwitcherProps {
     activeResumeId: string | null;
     onSelectStrategy: (jobId: string) => void;
 }
+
+interface JobItemProps {
+    job: JobInfo;
+    isActive: boolean;
+    onSelect: (jobId: string) => void;
+}
+
+const JobItem = React.memo(({ job, isActive, onSelect }: JobItemProps) => (
+    <button
+        onClick={() => onSelect(job.id!)}
+        className="w-full text-left p-4 hover:bg-white/5 transition-colors border-b border-white/5 flex items-start justify-between group"
+    >
+        <div>
+            <div className={`font-tiempos text-sm font-bold mb-1 ${isActive ? 'text-accent' : 'text-text-primary'}`}>
+                {job.contextName || job.title}
+            </div>
+            <div className="flex flex-col gap-0.5">
+                <div className="font-interstate text-[10px] text-text-secondary">
+                    {job.company} • {job.title}
+                </div>
+            </div>
+        </div>
+        {isActive && (
+            <Check className="w-4 h-4 text-accent" />
+        )}
+    </button>
+));
 
 const ContextSwitcher: React.FC<ContextSwitcherProps> = ({
     jobs,
@@ -32,6 +60,11 @@ const ContextSwitcher: React.FC<ContextSwitcherProps> = ({
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    const handleSelect = useCallback((jobId: string) => {
+        onSelectStrategy(jobId);
+        setIsOpen(false);
+    }, [onSelectStrategy]);
 
     return (
         <div className="w-full bg-surface-base border-b border-white/5 px-6 py-4 flex items-center justify-between z-30" ref={dropdownRef}>
@@ -62,28 +95,12 @@ const ContextSwitcher: React.FC<ContextSwitcherProps> = ({
                         <div className="absolute top-full left-0 mt-3 w-[300px] md:w-[400px] bg-surface-elevated border border-white/10 rounded-lg shadow-2xl overflow-hidden animate-fade-in-up z-40">
                             <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
                                 {jobs.map((job) => (
-                                    <button
+                                    <JobItem
                                         key={job.id}
-                                        onClick={() => {
-                                            onSelectStrategy(job.id!);
-                                            setIsOpen(false);
-                                        }}
-                                        className="w-full text-left p-4 hover:bg-white/5 transition-colors border-b border-white/5 flex items-start justify-between group"
-                                    >
-                                        <div>
-                                            <div className={`font-tiempos text-sm font-bold mb-1 ${activeJobId === job.id ? 'text-accent' : 'text-text-primary'}`}>
-                                                {job.contextName || job.title}
-                                            </div>
-                                            <div className="flex flex-col gap-0.5">
-                                                <div className="font-interstate text-[10px] text-text-secondary">
-                                                    {job.company} • {job.title}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {activeJobId === job.id && (
-                                            <Check className="w-4 h-4 text-accent" />
-                                        )}
-                                    </button>
+                                        job={job}
+                                        isActive={activeJobId === job.id}
+                                        onSelect={handleSelect}
+                                    />
                                 ))}
                                 {jobs.length === 0 && (
                                     <div className="p-4 text-center font-interstate text-xs">
@@ -104,6 +121,8 @@ const ContextSwitcher: React.FC<ContextSwitcherProps> = ({
                         {activeJob.company}
                     </span>
                 )}
+                <div className="h-6 w-px bg-white/10 mx-2" />
+                <UserMenu />
             </div>
         </div>
     );

@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
 
 const getEnv = (key: string): string => {
   const v = process.env[key]
@@ -19,21 +20,18 @@ let _supabaseBrowser: SupabaseClient | null = null;
 
 export const getSupabaseBrowser = (): SupabaseClient => {
   if (_supabaseBrowser) return _supabaseBrowser;
-  
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  
+
   if (!url || !key) {
     throw new Error(
       'Supabase configuration missing. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (or NEXT_PUBLIC_SUPABASE_ANON_KEY) in .env.local'
     );
   }
-  
-  _supabaseBrowser = createClient(url, key, {
-    auth: { persistSession: true, autoRefreshToken: true },
-    global: { headers: { 'x-client': 'rtios-next' } },
-  });
-  
+
+  _supabaseBrowser = createBrowserClient(url, key);
+
   return _supabaseBrowser;
 };
 
@@ -63,8 +61,20 @@ export const auth = {
   signInWithOAuth: async (provider: 'github' | 'google' | 'azure') => {
     return supabaseBrowser.auth.signInWithOAuth({ provider })
   },
+  getUser: async () => {
+    return supabaseBrowser.auth.getUser()
+  },
   signOut: async () => {
-    return supabaseBrowser.auth.signOut()
+    const result = await supabaseBrowser.auth.signOut();
+
+    // Clear local cache for security
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('rtios_career_resumes');
+      localStorage.removeItem('rtios_career_profile');
+      localStorage.removeItem('rtios_job_storage');
+    }
+
+    return result;
   },
 }
 

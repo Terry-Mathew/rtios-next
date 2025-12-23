@@ -25,6 +25,7 @@ interface UseJobManagementReturn {
     jobs: JobInfo[];
     activeJobId: string | null;
     currentJob: JobInfo;
+    isLoading: boolean;
 
     // Actions
     addJob: (job: JobInfo) => Promise<void>;
@@ -37,7 +38,7 @@ interface UseJobManagementReturn {
     // Low-level operations
     updateJobOutputs: (jobId: string, outputs: import('@/src/domains/jobs/types').JobOutputsUpdate) => void;
     setActiveJobId: (id: string | null) => void;
-    setJobs: React.Dispatch<React.SetStateAction<JobInfo[]>>;
+    setJobs: (jobs: JobInfo[]) => void;
 }
 
 export const useJobManagement = (): UseJobManagementReturn => {
@@ -49,7 +50,8 @@ export const useJobManagement = (): UseJobManagementReturn => {
         deleteJob: handleDeleteJob,
         updateJobOutputs,
         setActiveJobId,
-        setJobs
+        setJobs,
+        isLoading
     } = useJobApplications();
 
     // Get workspace state and actions (using useShallow to prevent infinite re-renders)
@@ -119,25 +121,38 @@ export const useJobManagement = (): UseJobManagementReturn => {
 
     // Select/switch to different job
     const selectJob = useCallback((jobId: string) => {
-        // 1. Snapshot current job
+        // 1. Snapshot current job (bulk save recommended)
         if (activeJobId) {
             const snapshot = createSnapshot(appState);
-            updateJobOutputs(activeJobId, snapshot);
+            updateJobOutputs(activeJobId, snapshot, { bulk: true });
         }
 
         // 2. Hydrate from target job
         const targetJob = jobs.find(j => j.id === jobId);
         const hydratedState = hydrateFromJob(targetJob, appState.linkedIn.input);
 
-        // 3. Apply to workspace store
-        if (hydratedState.status) setStatus(hydratedState.status);
-        if (hydratedState.resumeText !== undefined) setResumeText(hydratedState.resumeText);
-        if (hydratedState.research !== undefined) setResearch(hydratedState.research);
-        if (hydratedState.analysis !== undefined) setAnalysis(hydratedState.analysis);
-        if (hydratedState.coverLetter) updateCoverLetter(hydratedState.coverLetter);
-        if (hydratedState.linkedIn) updateLinkedIn(hydratedState.linkedIn);
-        if (hydratedState.interviewPrep) updateInterviewPrep(hydratedState.interviewPrep);
-        if (!hydratedState.status) setStatus(AppStatus.IDLE);
+        // 3. Batch apply updates to workspace store
+        // We do this individually but sequentially; however, because they are inside a useCallback
+        // that's triggered by a UI event, React 18 will batch these automatically.
+        // We also ensure we only update if values actually changed to prevent redundant work.
+        useWorkspaceStore.setState((state) => {
+            if (hydratedState.status !== undefined) state.status = hydratedState.status;
+            if (hydratedState.resumeText !== undefined) state.resumeText = hydratedState.resumeText;
+            if (hydratedState.research !== undefined) state.research = hydratedState.research;
+            if (hydratedState.analysis !== undefined) state.analysis = hydratedState.analysis;
+
+            if (hydratedState.coverLetter) {
+                state.coverLetter = { ...state.coverLetter, ...hydratedState.coverLetter };
+            }
+            if (hydratedState.linkedIn) {
+                state.linkedIn = { ...state.linkedIn, ...hydratedState.linkedIn };
+            }
+            if (hydratedState.interviewPrep) {
+                state.interviewPrep = { ...state.interviewPrep, ...hydratedState.interviewPrep };
+            }
+
+            if (!hydratedState.status) state.status = AppStatus.IDLE;
+        });
 
         // 4. Set as active
         setActiveJobId(jobId);
@@ -203,6 +218,7 @@ export const useJobManagement = (): UseJobManagementReturn => {
         jobs,
         activeJobId,
         currentJob,
+        isLoading,
 
         // Actions
         addJob,

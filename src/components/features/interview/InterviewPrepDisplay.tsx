@@ -10,6 +10,32 @@ interface InterviewPrepDisplayProps {
     canGenerate: boolean;
 }
 
+const ALLOWED_ELEMENTS = [
+    'p', 'br', 'strong', 'em', 'ul', 'ol', 'li',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre', 'a'
+];
+
+const SafeLink: React.FC<{ href?: string; children?: React.ReactNode }> = ({ href, children }) => {
+    try {
+        const url = new URL(href || '', typeof window !== 'undefined' ? window.location.origin : '');
+        if (!['http:', 'https:'].includes(url.protocol)) {
+            return <span>{children}</span>;
+        }
+        return (
+            <a
+                href={url.toString()}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                className="text-accent hover:underline"
+            >
+                {children}
+            </a>
+        );
+    } catch {
+        return <span>{children}</span>;
+    }
+};
+
 const InterviewQuestionCard: React.FC<{ question: InterviewQuestion; index: number }> = ({ question, index }) => {
     const [isExpanded, setIsExpanded] = React.useState(true);
 
@@ -63,7 +89,13 @@ const InterviewQuestionCard: React.FC<{ question: InterviewQuestion; index: numb
                                 <Target className="w-3 h-3" /> What They Are Evaluating
                             </h4>
                             <div className="prose prose-invert prose-sm prose-ul:list-disc prose-li:font-sans prose-li:text-text-primary prose-li:text-xs prose-li:leading-relaxed">
-                                <ReactMarkdown>{question.evaluationCriteria}</ReactMarkdown>
+                                <ReactMarkdown
+                                    allowedElements={ALLOWED_ELEMENTS}
+                                    unwrapDisallowed
+                                    components={{ a: SafeLink }}
+                                >
+                                    {Array.isArray(question.evaluationCriteria) ? question.evaluationCriteria.join('\n') : question.evaluationCriteria}
+                                </ReactMarkdown>
                             </div>
                         </div>
 
@@ -73,7 +105,13 @@ const InterviewQuestionCard: React.FC<{ question: InterviewQuestion; index: numb
                                 <Layers className="w-3 h-3" /> Recommended Structure
                             </h4>
                             <div className="prose prose-invert prose-sm prose-ul:list-disc prose-li:font-sans prose-li:text-text-primary prose-li:text-xs prose-li:leading-relaxed">
-                                <ReactMarkdown>{question.answerStructure}</ReactMarkdown>
+                                <ReactMarkdown
+                                    allowedElements={ALLOWED_ELEMENTS}
+                                    unwrapDisallowed
+                                    components={{ a: SafeLink }}
+                                >
+                                    {Array.isArray(question.answerStructure) ? question.answerStructure.join('\n') : question.answerStructure}
+                                </ReactMarkdown>
                             </div>
                         </div>
                     </div>

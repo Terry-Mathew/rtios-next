@@ -15,22 +15,29 @@ export const fetchProfile = async (): Promise<UserProfile | null> => {
 
     const { data, error } = await supabaseBrowser
         .from('profiles')
-        .select('linkedin_url, portfolio_url, settings')
+        .select('full_name, linkedin_url, portfolio_url, settings')
         .eq('id', user.id)
         .single();
 
     if (error) {
         if (error.code === 'PGRST116') {
             console.warn('Profile not found for user:', user.id);
-            return null; // Not found
+            return {
+                email: user.email || '',
+                activeResumeId: null,
+                fullName: '',
+                linkedinUrl: '',
+                portfolioUrl: ''
+            };
         }
         console.error('Error fetching profile for user:', user.id);
-        console.error('Full Error Object:', JSON.stringify(error, null, 2));
         return null;
     }
 
     // Map DB columns to Type
     return {
+        email: user.email || '',
+        fullName: data.full_name || '',
         linkedinUrl: data.linkedin_url || '',
         portfolioUrl: data.portfolio_url || '',
         activeResumeId: data.settings?.active_resume_id || null,

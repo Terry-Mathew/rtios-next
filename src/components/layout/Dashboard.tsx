@@ -15,46 +15,27 @@ interface DashboardProps {
     onAddResume: (file: File) => void;
     onUpdateProfile: (profile: UserProfile) => void;
     onNavigateToApp: () => void;
+    isLoading?: boolean;
 }
 
 // --- PROFILE CARD COMPONENT ---
-const ProfileCard: React.FC<{ userProfile: UserProfile; onUpdateProfile: (p: UserProfile) => void }> = ({ userProfile, onUpdateProfile }) => {
+const ProfileCard: React.FC<{ userProfile: UserProfile; onUpdateProfile: (p: UserProfile) => void; isLoading?: boolean }> = ({ userProfile, onUpdateProfile, isLoading }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Local State
+    // Local State (for editing)
     const [fullName, setFullName] = useState('');
-    const [email, setEmail] = useState('');
     const [portfolioUrl, setPortfolioUrl] = useState('');
     const [linkedinUrl, setLinkedinUrl] = useState('');
 
-    // Fetch Initial Data
+    // Sync local state when props change or entering edit mode
     useEffect(() => {
-        let active = true;
-        const fetchProfile = async () => {
-            const { data: { user } } = await supabaseBrowser.auth.getUser();
-            if (!user) return;
-
-            setEmail(user.email || '');
-
-            const { data } = await supabaseBrowser
-                .from('profiles')
-                .select('full_name')
-                .eq('id', user.id)
-                .single();
-
-            if (active && data) {
-                setFullName(data.full_name || '');
-            }
-        };
-
-        // Sync with props
-        setPortfolioUrl(userProfile.portfolioUrl || '');
-        setLinkedinUrl(userProfile.linkedinUrl || '');
-
-        fetchProfile();
-        return () => { active = false; };
-    }, [userProfile]);
+        if (!isEditing) {
+            setFullName(userProfile.fullName || '');
+            setPortfolioUrl(userProfile.portfolioUrl || '');
+            setLinkedinUrl(userProfile.linkedinUrl || '');
+        }
+    }, [userProfile, isEditing]);
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -99,7 +80,7 @@ const ProfileCard: React.FC<{ userProfile: UserProfile; onUpdateProfile: (p: Use
                         <h3 className="font-tiempos text-lg font-bold text-text-primary leading-tight">
                             {isEditing ? 'Edit Profile' : (fullName || 'Your Profile')}
                         </h3>
-                        {!isEditing && <p className="text-[10px] font-interstate text-text-secondary">{email}</p>}
+                        {!isEditing && <p className="text-[10px] font-interstate text-text-secondary">{userProfile.email}</p>}
                     </div>
                 </div>
                 {!isEditing ? (
@@ -165,17 +146,25 @@ const ProfileCard: React.FC<{ userProfile: UserProfile; onUpdateProfile: (p: Use
                 </div>
             ) : (
                 <div className="space-y-3 mt-1">
-                    <div className="flex items-center gap-2 text-xs text-text-secondary">
+                    <div className="flex items-center gap-2 text-xs text-text-secondary min-h-[1rem]">
                         <Globe className="w-3 h-3" />
-                        <a href={portfolioUrl} target="_blank" rel="noopener noreferrer" className="hover:text-accent truncate transition-colors">
-                            {portfolioUrl || 'No portfolio linked'}
-                        </a>
+                        {portfolioUrl ? (
+                            <a href={portfolioUrl} target="_blank" rel="noopener noreferrer" className="hover:text-accent truncate transition-colors">
+                                {portfolioUrl}
+                            </a>
+                        ) : (
+                            <span className="opacity-40 italic">{isLoading ? 'Loading...' : 'No portfolio linked'}</span>
+                        )}
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-text-secondary">
+                    <div className="flex items-center gap-2 text-xs text-text-secondary min-h-[1rem]">
                         <Briefcase className="w-3 h-3" />
-                        <a href={linkedinUrl} target="_blank" rel="noopener noreferrer" className="hover:text-accent truncate transition-colors">
-                            {linkedinUrl || 'No LinkedIn linked'}
-                        </a>
+                        {linkedinUrl ? (
+                            <a href={linkedinUrl} target="_blank" rel="noopener noreferrer" className="hover:text-accent truncate transition-colors">
+                                {linkedinUrl}
+                            </a>
+                        ) : (
+                            <span className="opacity-40 italic">{isLoading ? 'Loading...' : 'No LinkedIn linked'}</span>
+                        )}
                     </div>
                 </div>
             )}
@@ -199,7 +188,8 @@ const Dashboard: React.FC<DashboardProps> = ({
     onDeleteResume,
     onAddResume,
     onUpdateProfile,
-    onNavigateToApp
+    onNavigateToApp,
+    isLoading
 }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -286,13 +276,17 @@ const Dashboard: React.FC<DashboardProps> = ({
                                 </>
                             ) : (
                                 <div className="flex flex-col items-center justify-center h-full py-6 text-center">
-                                    <p className="font-interstate text-xs text-text-secondary mb-4">No resume active.</p>
-                                    <button
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-xs font-interstate font-bold uppercase tracking-widest transition-colors flex items-center gap-2"
-                                    >
-                                        <Upload className="w-3 h-3" /> Upload PDF
-                                    </button>
+                                    <p className="font-interstate text-xs text-text-secondary mb-4">
+                                        {isLoading ? 'Fetching resume...' : 'No resume active.'}
+                                    </p>
+                                    {!isLoading && (
+                                        <button
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-xs font-interstate font-bold uppercase tracking-widest transition-colors flex items-center gap-2"
+                                        >
+                                            <Upload className="w-3 h-3" /> Upload PDF
+                                        </button>
+                                    )}
                                 </div>
                             )}
                             <input
@@ -308,6 +302,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                         <ProfileCard
                             userProfile={userProfile}
                             onUpdateProfile={onUpdateProfile}
+                            isLoading={isLoading}
                         />
                     </div>
                 </section>

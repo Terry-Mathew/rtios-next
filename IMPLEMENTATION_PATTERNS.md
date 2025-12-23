@@ -426,6 +426,84 @@ Below is a quick-reference for the core features we've implemented, with the pro
 
 ---
 
+## 36. Race Condition Prevention (Async Database Operations)
+**The Problem**: Optimistic UI updates return immediately while database saves happen asynchronously. Downstream operations that depend on the database record (like saving related child records) fail because the parent doesn't exist yet, causing RLS policy violations.
+**The Solution**: Ensure critical database operations complete before returning control to the caller. Use `await` properly and only return after the database confirms the write succeeded.
+
+### Learnings:
+- **The Bug Pattern**: `addJob()` added the job to Zustand store immediately, set `activeJobId`, then returned BEFORE the database save completed. When `updateJobOutputs()` was called milliseconds later, the RLS policy check failed because the job didn't exist in the database yet.
+- **The Fix**: Move the `return` statement AFTER the `await jobService.saveJob()` completes, not before.
+- **Timing Guarantee**: If function A must complete before function B can succeed, A must wait for all critical async operations before returning.
+- **Performance Trade-off**: This adds 100-300ms latency but prevents data corruption and user-facing errors.
+
+### Prompt to Implement:
+> "Audit all async CRUD operations in Zustand stores. For each operation that modifies the database: 1) Ensure the function properly awaits the database call before returning. 2) The `return` statement must come AFTER the database operation completes, not in a fire-and-forget pattern. 3) Add error handling that rolls back optimistic updates if the database operation fails. Example: In `addJob`, the flow should be: a) Add to store (optimistic), b) AWAIT database save, c) If success, return jobId, d) If failure, remove from store and throw error. This ensures that when the function returns, the database is consistent with the UI state."
+
+---
+
+## 37. Optimistic Updates with Rollback (Error Recovery)
+**The Problem**: When an optimistic update succeeds in the UI but the database operation fails, the UI shows stale/incorrect data, confusing users and causing subsequent operations to fail.
+**The Solution**: Wrap database operations in try/catch blocks and implement automatic rollback of optimistic changes when errors occur.
+
+### Learnings:
+- **Optimistic Pattern**: Update the UI immediately for perceived performance, but track the change so it can be reverted.
+- **Rollback on Failure**: If the database save fails, remove the optimistically added item from the store and reset affected state (like `activeJobId`).
+- **Error Propagation**: Re-throw the error after rollback so the caller (UI) can show appropriate feedback (toast, error message).
+- **State Consistency**: After rollback, the UI should match the database exactly - no orphaned records in the store.
+
+### Prompt to Implement:
+> "Implement optimistic updates with automatic rollback in the job store. 1) In the `addJob` function: a) Create a unique ID for the new job, b) Optimistically add it to the store, c) Set it as the active job, d) Wrap the database save in try/catch, e) On error, remove the job from the store using `state.jobs = state.jobs.filter(j => j.id !== newJobId)`, f) If the failed job was active, reset `activeJobId` to null, g) Re-throw the error to notify the caller. 2) Add detailed error logging that shows both the error object and a human-readable message. 3) Ensure the rollback happens in the same synchronous operation as the error handling to prevent race conditions."
+
+---
+
+## 38. Supabase Error Serialization (Debugging)
+**The Problem**: Logging Supabase errors with `console.error(error)` or `JSON.stringify(error)` prints `{}` because PostgresError properties are non-enumerable, making debugging impossible.
+**The Solution**: Explicitly destructure error properties (`message`, `code`, `details`, `hint`) when logging, and create structured error objects for visibility.
+
+### Learnings:
+- **Non-enumerable Properties**: Supabase's `PostgresError` has its properties defined as non-enumerable, so they don't show up in standard serialization.
+- **Explicit Extraction**: Always log `{ message: error.message, code: error.code, details: error.details, hint: error.hint }` instead of the raw error object.
+- **Error Codes**: The `code` field is critical for diagnosing issues (e.g., `42501` = RLS violation, `23503` = foreign key violation).
+- **Hint Field**: The `hint` field often contains the exact solution to the problem.
+
+### Prompt to Implement:
+> "Fix all Supabase error logging in the codebase. 1) Find all `console.error(error)` calls in service functions that interact with Supabase. 2) Replace them with structured logging: `console.error('Operation failed:', { message: error.message, code: error.code, details: error.details, hint: error.hint })`. 3) In development mode, also log the full stack trace for debugging. 4) Create a helper function `serializeSupabaseError(error)` that returns a structured object, and use it consistently everywhere. 5) Update error handling in stores to use the same pattern, logging both the serialized error and a user-friendly message."
+
+---
+
+## 39. RLS Policy Debugging (Supabase)
+**The Problem**: Row Level Security policies fail silently with cryptic error codes, and it's hard to determine whether the issue is authentication, missing data, or policy configuration.
+**The Solution**: Create a systematic debugging checklist that verifies each layer: authentication, parent record existence, policy configuration, and timing.
+
+### Learnings:
+- **Common Error Codes**: 
+  - `42501` = RLS policy violation (user not authorized OR parent record doesn't exist)
+  - `23503` = Foreign key violation (parent record missing)
+  - `23505` = Unique constraint violation (duplicate record)
+- **Parent-Child Policies**: For child tables (like `job_outputs`), the RLS policy checks if the parent record (job) exists AND belongs to the user. If the parent is still being saved (race condition), the policy fails.
+- **Policy Types**: Create separate policies for SELECT, INSERT, UPDATE, DELETE operations - don't use a single catch-all policy.
+- **WITH CHECK vs USING**: INSERT and UPDATE policies need both `USING` (can I access this row?) and `WITH CHECK` (is the new data allowed?).
+
+### Prompt to Implement:
+> "Implement comprehensive RLS policy debugging. 1) Create a troubleshooting guide that documents common RLS error codes and their causes. 2) For child tables with relationship-based policies (like job_outputs checking the parent jobs table), add explicit policies for each operation: a) SELECT: `USING (EXISTS (SELECT 1 FROM jobs WHERE id = job_outputs.job_id AND user_id = auth.uid()))`, b) INSERT: `WITH CHECK (EXISTS (...))`, c) UPDATE: Both `USING` and `WITH CHECK`, d) DELETE: `USING (...)`. 3) Add a SQL query to verify policy existence: `SELECT * FROM pg_policies WHERE tablename = 'your_table'`. 4) Create a test script that verifies: user is authenticated, parent record exists, parent belongs to user, policy allows operation. 5) Document the timing requirement: parent records must be fully committed to the database before child records can be inserted."
+
+---
+
+## 40. Async Operation Timing Guarantees (Architecture)
+**The Problem**: In complex flows involving multiple async operations (save job → save outputs → update UI), it's unclear which operations must complete before others can start, leading to race conditions and failures.
+**The Solution**: Document explicit timing guarantees and use await chains to enforce execution order. Create a dependency graph for complex operations.
+
+### Learnings:
+- **Explicit Ordering**: If operation B depends on operation A's database record existing, A must `await` its database save before returning.
+- **Fire-and-Forget is Dangerous**: Never use fire-and-forget patterns (`promise.then()` without awaiting) for operations that other code depends on.
+- **Return Value Contracts**: A function that returns an ID should guarantee that a record with that ID exists in the database.
+- **Parallel vs Sequential**: Only run operations in parallel if they're truly independent. When in doubt, use sequential execution.
+
+### Prompt to Implement:
+> "Establish async operation timing guarantees across the codebase. 1) Create a dependency analysis document that lists all async operations and their prerequisites. Example: 'saveJobOutputs requires: job record exists in database, user is authenticated'. 2) Audit all async functions that return database IDs - ensure they await the database operation before returning. 3) Add JSDoc comments to async functions specifying their guarantees: '@returns {Promise<string>} Job ID - guaranteed to exist in database when promise resolves'. 4) For complex multi-step operations (like 'Run Intelligence'), create an orchestrator that enforces execution order: a) Save job (await), b) Save research (await), c) Save analysis (await), d) Update UI (sync). 5) Add integration tests that verify timing guarantees by attempting dependent operations immediately after the prerequisite completes."
+
+---
+
 # The "Master Blueprint" Implementation Prompt
 
 Use this prompt when starting a new project or a major feature area to ensure the architecture remains consistent.

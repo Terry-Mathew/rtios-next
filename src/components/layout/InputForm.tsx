@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { JobInfo, UserProfile, SavedResume, AppStatus } from '@/src/types';
 import { Briefcase, FileText, RefreshCw, FolderOpen, AlertCircle, Plus, Check, Trash2 } from 'lucide-react';
-import * as GeminiService from '@/src/domains/intelligence/services/gemini';
+import * as GeminiService from '@/src/domains/intelligence/actions';
 import { supabaseBrowser } from '@/src/services/supabase';
 
 interface InputFormProps {

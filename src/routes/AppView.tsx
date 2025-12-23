@@ -22,7 +22,7 @@ import { useResumeManagement } from '@/src/hooks/useResumeManagement';
 import { useJobManagement } from '@/src/hooks/useJobManagement';
 import { AppStatus, ToneType } from '@/src/types';
 import { Layout, Menu } from 'lucide-react';
-import * as GeminiService from '@/src/domains/intelligence/services/gemini';
+import * as GeminiService from '@/src/domains/intelligence/actions';
 import { ErrorBoundary } from '@/src/components/errors/ErrorBoundary';
 import { FeatureErrorBoundary } from '@/src/components/errors/FeatureErrorBoundary';
 import { ToastContainer } from '@/src/components/ui/ToastContainer';

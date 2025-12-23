@@ -27,6 +27,7 @@ export interface JobInfo {
   contextName?: string; // The "Target Identifier Name"
   linkedResumeId?: string; // To bind a specific resume to this strategy
   outputs?: JobOutputs; // Persisted generation history
+  status?: 'saved' | 'applied' | 'interviewing' | 'offer' | 'rejected';
 }
 
 /**

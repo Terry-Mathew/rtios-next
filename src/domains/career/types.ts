@@ -16,6 +16,8 @@ export interface SavedResume {
 export interface UserProfile {
   // Active selection
   activeResumeId: string | null;
+  fullName?: string;
+  email?: string;
   portfolioUrl?: string;
   linkedinUrl?: string;
 }

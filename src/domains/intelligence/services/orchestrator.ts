@@ -24,7 +24,7 @@ import {
   generateCoverLetter,
   generateLinkedInMessage,
   generateInterviewQuestions
-} from '@/src/domains/intelligence/services/gemini';
+} from '@/src/domains/intelligence/actions';
 
 /**
  * Result of the initial generation pipeline (research + analysis + cover letter)

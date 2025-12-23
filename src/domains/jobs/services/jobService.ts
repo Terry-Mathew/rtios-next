@@ -30,7 +30,12 @@ export const fetchJobs = async (): Promise<JobInfo[]> => {
         .order('created_at', { ascending: false });
 
     if (error) {
-        console.error('Error fetching jobs:', error);
+        console.error('Error fetching jobs:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+        });
         return [];
     }
 
@@ -110,28 +115,54 @@ export const deleteJob = async (id: string) => {
 // --- Saving Outputs ---
 
 const saveOutput = async (jobId: string, type: OutputType, content: any) => {
-    // 1. Check if exists to update, or insert new
-    // Since we don't have a unique constraint on (job_id, type) in the migration explicitly (my bad, should have added UNIQUE),
-    // we should check first or delete previous.
-    // Ideally, migration should have: CREATE UNIQUE INDEX ON public.job_outputs (job_id, type);
-    // To be safe, let's DELETE old one of this type for this job, then INSERT new.
-
-    const { error: delError } = await supabaseBrowser
+    // Leverage the new unique index on (job_id, type) for atomic upserts
+    // This replaces the previous delete-then-insert cycle, reducing DB roundtrips
+    const { error } = await supabaseBrowser
         .from('job_outputs')
-        .delete()
-        .match({ job_id: jobId, type: type });
+        .upsert(
+            { job_id: jobId, type, content },
+            { onConflict: 'job_id,type' }
+        );
 
-    if (delError) console.warn('Error clearing old output:', delError);
+    if (error) {
+        console.error(`Error upserting job output (${type}):`, {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+        });
+        throw error;
+    }
+};
+
+/**
+ * Persists multiple job outputs in a single transaction/request
+ * Significant performance improvement during "Run Intelligence" flows
+ */
+export const saveJobOutputsBulk = async (jobId: string, outputs: JobOutputs): Promise<void> => {
+    const upserts = [];
+
+    if (outputs.research) upserts.push({ job_id: jobId, type: 'company_research', content: outputs.research });
+    if (outputs.analysis) upserts.push({ job_id: jobId, type: 'resume_scan', content: outputs.analysis });
+    if (outputs.coverLetter) upserts.push({ job_id: jobId, type: 'cover_letter', content: outputs.coverLetter });
+    if (outputs.linkedIn) upserts.push({ job_id: jobId, type: 'linkedin_message', content: outputs.linkedIn });
+    if (outputs.interviewPrep) upserts.push({ job_id: jobId, type: 'interview_prep', content: outputs.interviewPrep });
+
+    if (upserts.length === 0) return;
 
     const { error } = await supabaseBrowser
         .from('job_outputs')
-        .insert({
-            job_id: jobId,
-            type: type,
-            content: content
-        });
+        .upsert(upserts, { onConflict: 'job_id,type' });
 
-    if (error) throw error;
+    if (error) {
+        console.error('Error batch saving job outputs:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+        });
+        throw error;
+    }
 };
 
 // Typed helpers for saving specific outputs

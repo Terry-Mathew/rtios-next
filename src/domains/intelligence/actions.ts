@@ -18,20 +18,21 @@ import type {
 } from '@/src/domains/intelligence/types';
 import { extractWebSources } from '@/src/types/gemini';
 
-// Prefer server-side key, fall back to public key if not set (for backward compatibility during migration)
-const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+// Server-side API key only (no client-side fallback)
+const apiKey = process.env.GEMINI_API_KEY;
 
-// DEBUG: Log the key status (masked)
-console.log(`[Gemini Init] Key configured: ${apiKey ? 'YES' : 'NO'}`);
-if (apiKey) {
-  console.log(`[Gemini Init] Key starts with: '${apiKey.substring(0, 4)}...' (Length: ${apiKey.length})`);
+// Development-only logging
+if (process.env.NODE_ENV === 'development' && apiKey) {
+  console.log('[Gemini Init] API key configured successfully');
 }
 
+// Fail fast if key is missing
 if (!apiKey) {
   throw new Error(
     'CRITICAL: GEMINI_API_KEY is not configured in environment variables. ' +
     'The application cannot function without a valid API key. ' +
-    'Please add GEMINI_API_KEY to your .env.local file.'
+    'Please add GEMINI_API_KEY=your_key to your .env.local file (development) ' +
+    'or configure it in Vercel Environment Variables (production).'
   );
 }
 

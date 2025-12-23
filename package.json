@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@google/genai": "^1.34.0",
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.89.0",
     "immer": "^11.1.0",
     "lucide-react": "^0.562.0",

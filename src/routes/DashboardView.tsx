@@ -29,6 +29,7 @@ const DashboardView: React.FC = () => {
         resumes,
         activeResumeId,
         userProfile,
+        isLoading: isResumesLoading,
         addResume: handleAddResume,
         deleteResume: handleDeleteResume,
         updateProfile: setUserProfile,
@@ -43,9 +44,12 @@ const DashboardView: React.FC = () => {
     const {
         jobs,
         activeJobId,
+        isLoading: isJobsLoading,
         selectJob: handleSelectStrategy,
         deleteJobWithWorkspaceClear: handleDeleteJobWithWorkspaceClear,
     } = useJobManagement();
+
+    const isLoading = isResumesLoading || isJobsLoading;
 
 
 
@@ -131,6 +135,7 @@ const DashboardView: React.FC = () => {
                     userProfile={userProfile}
                     activeJobId={activeJobId}
                     activeResumeId={activeResumeId}
+                    isLoading={isLoading}
                     onSelectStrategy={handleSelectStrategy}
                     onDeleteJob={handleDeleteJobWithWorkspaceClear}
                     onDeleteResume={handleDeleteResume}

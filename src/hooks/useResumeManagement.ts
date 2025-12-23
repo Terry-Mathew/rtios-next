@@ -14,7 +14,7 @@ import { useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useCareerContext } from '@/src/domains/career/hooks/useCareerContext';
 import { useWorkspaceStore } from '@/src/stores/workspaceStore';
-// import * as GeminiService from '@/src/domains/intelligence/services/gemini';
+
 // import { fileToBase64 } from '@/src/utils/fileUtils';
 import { AppStatus } from '@/src/types';
 import type { SavedResume, UserProfile } from '@/src/domains/career/types';
@@ -28,6 +28,7 @@ interface UseResumeManagementReturn {
     activeResumeId: string | null;
     currentResume: SavedResume | undefined;
     userProfile: UserProfile;
+    isLoading: boolean;
 
     // Actions
     addResume: (file: File) => Promise<void>;
@@ -44,6 +45,7 @@ export const useResumeManagement = (): UseResumeManagementReturn => {
         activeResumeId,
         userProfile,
         currentResume,
+        isLoading,
         addResume: legacyAddResume, // Deprecated
         uploadResume: contextUploadResume,
         selectResume: handleSelectResume,
@@ -126,6 +128,7 @@ export const useResumeManagement = (): UseResumeManagementReturn => {
         activeResumeId,
         currentResume,
         userProfile,
+        isLoading,
 
         // Actions
         addResume,

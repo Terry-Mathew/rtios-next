@@ -43,6 +43,9 @@ const DEFAULT_PROFILE: UserProfile = {
 // Create the context (exported for use by careerHooks.ts)
 export const CareerContext = createContext<CareerContextValue | null>(null);
 
+const STORAGE_KEY_RESUMES = 'rtios_career_resumes';
+const STORAGE_KEY_PROFILE = 'rtios_career_profile';
+
 // Provider component
 export const CareerContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [resumes, setResumes] = useState<SavedResume[]>([]);
@@ -55,11 +58,39 @@ export const CareerContextProvider: React.FC<{ children: React.ReactNode }> = ({
     // Derived: Current resume
     const currentResume = resumes.find(r => r.id === activeResumeId) || resumes[0];
 
+    // Persistence: Save to storage
+    useEffect(() => {
+        if (!isLoading) {
+            localStorage.setItem(STORAGE_KEY_RESUMES, JSON.stringify(resumes));
+            localStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(userProfile));
+        }
+    }, [resumes, userProfile, isLoading]);
+
     // Initial Load
     useEffect(() => {
         let mounted = true;
 
         const init = async () => {
+            // 1. Load from Storage (Instant)
+            try {
+                const storedResumes = localStorage.getItem(STORAGE_KEY_RESUMES);
+                const storedProfile = localStorage.getItem(STORAGE_KEY_PROFILE);
+
+                if (storedResumes && mounted) {
+                    const parsed = JSON.parse(storedResumes);
+                    // Revive dates
+                    setResumes(parsed.map((r: any) => ({ ...r, uploadDate: new Date(r.uploadDate) })));
+                }
+                if (storedProfile && mounted) {
+                    const parsed = JSON.parse(storedProfile);
+                    setUserProfile(parsed);
+                    if (parsed.activeResumeId) setActiveResumeId(parsed.activeResumeId);
+                }
+            } catch (e) {
+                console.warn('Failed to load from storage:', e);
+            }
+
+            // 2. Sync from Supabase (Silent Sync)
             try {
                 const [paramProfile, paramResumes] = await Promise.all([
                     careerService.fetchProfile(),
@@ -73,7 +104,6 @@ export const CareerContextProvider: React.FC<{ children: React.ReactNode }> = ({
                         if (paramProfile.activeResumeId && paramResumes.find(r => r.id === paramProfile.activeResumeId)) {
                             setActiveResumeId(paramProfile.activeResumeId);
                         } else if (paramResumes.length > 0) {
-                            // Default to most recent
                             setActiveResumeId(paramResumes[0].id);
                         }
                     }
@@ -81,15 +111,20 @@ export const CareerContextProvider: React.FC<{ children: React.ReactNode }> = ({
                 }
             } catch (err) {
                 console.error('Failed to load career data:', err);
-                addToast({ type: 'error', message: 'Failed to load profile data' });
+                // Only show error toast if we don't have any data yet
+                if (resumes.length === 0) {
+                    addToast({ type: 'error', message: 'Failed to load profile data' });
+                }
             } finally {
                 if (mounted) setIsLoading(false);
             }
         };
 
-        init();
+        if (typeof window !== 'undefined') {
+            init();
+        }
         return () => { mounted = false; };
-    }, [addToast]);
+    }, []);
 
     // Actions
 
