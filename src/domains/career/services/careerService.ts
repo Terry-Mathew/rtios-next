@@ -49,6 +49,7 @@ export const updateProfile = async (profile: Partial<UserProfile>) => {
     if (!user) throw new Error('User not authenticated');
 
     // 1. Prepare updates for columns
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updates: Record<string, any> = {};
     if (profile.linkedinUrl !== undefined) updates.linkedin_url = profile.linkedinUrl;
     if (profile.portfolioUrl !== undefined) updates.portfolio_url = profile.portfolioUrl;

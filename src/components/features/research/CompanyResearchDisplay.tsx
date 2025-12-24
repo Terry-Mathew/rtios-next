@@ -12,31 +12,33 @@ const ALLOWED_ELEMENTS = [
 
 // Safe link renderer - only allows http/https protocols
 const SafeLink: Components['a'] = ({ href, children }) => {
+  let url: URL;
   try {
-    const url = new URL(href || '', window.location.origin);
-    if (!['http:', 'https:'].includes(url.protocol)) {
-      return <span>{children}</span>;
-    }
-    return (
-      <a
-        href={url.toString()}
-        target="_blank"
-        rel="noopener noreferrer nofollow"
-        className="text-accent hover:underline"
-      >
-        {children}
-      </a>
-    );
+    url = new URL(href || '', window.location.origin);
   } catch {
     return <span>{children}</span>;
   }
+
+  if (!['http:', 'https:'].includes(url.protocol)) {
+    return <span>{children}</span>;
+  }
+  return (
+    <a
+      href={url.toString()}
+      target="_blank"
+      rel="noopener noreferrer nofollow"
+      className="text-accent hover:underline"
+    >
+      {children}
+    </a>
+  );
 };
 
 interface CompanyResearchDisplayProps {
   research: ResearchResult | null;
 }
 
-const CompanyResearchDisplay: React.FC<CompanyResearchDisplayProps> = React.memo(({ research }) => {
+const CompanyResearchDisplay: React.FC<CompanyResearchDisplayProps> = React.memo(function CompanyResearchDisplay({ research }) {
   if (!research) return (
     <div className="p-8 text-center flex flex-col items-center justify-center h-full opacity-30">
       <Globe className="w-12 h-12 mb-4 text-text-secondary" />

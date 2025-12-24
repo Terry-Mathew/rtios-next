@@ -1,0 +1,51 @@
+
+> my-app@0.1.0 build /app
+> next build
+
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+▲ Next.js 16.1.0 (Turbopack)
+- Experiments (use with caution):
+  · serverActions
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 16.0s
+  Running TypeScript ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/22) ...
+  Generating static pages using 3 workers (5/22)
+  Generating static pages using 3 workers (10/22)
+  Generating static pages using 3 workers (16/22)
+✓ Generating static pages using 3 workers (22/22) in 845.7ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ○ /_not-found
+├ ○ /about
+├ ƒ /admin
+├ ƒ /admin/analytics
+├ ƒ /admin/requests
+├ ƒ /admin/users
+├ ƒ /api/admin/check-access
+├ ƒ /api/admin/impersonate
+├ ƒ /api/admin/reset-usage
+├ ƒ /api/admin/upgrade-user
+├ ƒ /api/admin/users/ban
+├ ƒ /api/admin/users/delete
+├ ○ /app
+├ ○ /cookie
+├ ○ /dashboard
+├ ○ /pricing
+├ ○ /privacy
+├ ƒ /settings
+└ ○ /terms
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
