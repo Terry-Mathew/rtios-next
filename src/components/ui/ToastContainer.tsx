@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { useToastStore } from '@/src/stores/toastStore';
 import { Toast } from '@/src/components/ui/Toast';

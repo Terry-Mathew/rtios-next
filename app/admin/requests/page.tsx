@@ -1,106 +1,21 @@
-'use server';
-
 import { listPendingAccessRequestsPaginated, approveAccessRequest, denyAccessRequest } from '@/src/domains/access/actions';
 import { revalidatePath } from 'next/cache';
 import React from 'react';
 import { ToastContainer } from '@/src/components/ui/ToastContainer';
 import { cookies } from 'next/headers';
 import { getSupabaseServer } from '@/src/services/supabase';
-import { useRouter } from 'next/navigation';
-import { useToastStore } from '@/src/stores/toastStore';
-import { realtime, supabaseBrowser } from '@/src/services/supabase';
+import { RealtimeRefresher, RowActions } from './ClientComponents';
 
 async function approveRequestAction(id: string, decidedBy: string, role: 'beta_user' | 'beta_admin') {
+  'use server';
   await approveAccessRequest(id, decidedBy, role);
   revalidatePath('/admin/requests');
 }
 
 async function denyRequestAction(id: string, decidedBy: string, reason: string) {
+  'use server';
   await denyAccessRequest(id, decidedBy, reason);
   revalidatePath('/admin/requests');
-}
-
-function RealtimeRefresher() {
-  'use client';
-  const { useEffect } = React as unknown as typeof React;
-  const router = useRouter();
-  useEffect(() => {
-    const sub = realtime.subscribeToBetaRequests(() => {
-      router.refresh();
-    });
-    return () => {
-      try { sub.unsubscribe(); } catch { }
-    };
-  }, [router, realtime]);
-  return null;
-}
-
-function RowActions({ id, defaultRole, approveAction, denyAction, query }: { id: string, defaultRole: 'beta_user' | 'beta_admin', approveAction: (id: string, decidedBy: string, role: 'beta_user' | 'beta_admin') => Promise<void>, denyAction: (id: string, decidedBy: string, reason: string) => Promise<void>, query: string }) {
-  'use client';
-  const ReactNS = React as unknown as typeof React;
-  const { useState, useTransition, useEffect } = ReactNS;
-  const router = useRouter();
-  const { addToast } = useToastStore();
-  const [role, setRole] = useState<'beta_user' | 'beta_admin'>(defaultRole);
-  const [reason, setReason] = useState('');
-  const [pending, startTransition] = useTransition();
-  const [actorUserId, setActorUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    supabaseBrowser.auth.getUser().then((res: { data: { user: { id: string } | null } }) => {
-      setActorUserId(res.data.user?.id ?? null);
-    }).catch(() => setActorUserId(null));
-  }, []);
-
-  const onApprove = async () => {
-    const ok = typeof window !== 'undefined' ? window.confirm('Approve this request?') : true;
-    if (!ok) return;
-    if (!actorUserId) {
-      addToast({ type: 'error', message: 'You must be signed in as admin', duration: 5000 });
-      return;
-    }
-    startTransition(async () => {
-      try {
-        await approveAction(id, actorUserId, role);
-        addToast({ type: 'success', message: 'Request approved', duration: 4000 });
-        router.replace(`/admin/requests?${query}`);
-        router.refresh();
-      } catch {
-        addToast({ type: 'error', message: 'Approval failed', duration: 5000 });
-      }
-    });
-  };
-
-  const onDeny = async () => {
-    const ok = typeof window !== 'undefined' ? window.confirm('Deny this request?') : true;
-    if (!ok) return;
-    if (!actorUserId) {
-      addToast({ type: 'error', message: 'You must be signed in as admin', duration: 5000 });
-      return;
-    }
-    startTransition(async () => {
-      try {
-        await denyAction(id, actorUserId, reason);
-        addToast({ type: 'success', message: 'Request denied', duration: 4000 });
-        router.replace(`/admin/requests?${query}`);
-        router.refresh();
-      } catch {
-        addToast({ type: 'error', message: 'Denial failed', duration: 5000 });
-      }
-    });
-  };
-
-  return (
-    <div className="flex gap-2 items-center">
-      <select value={role} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRole(e.target.value as 'beta_user' | 'beta_admin')} className="bg-surface-base border border-white/10 rounded px-2 py-1 text-xs mr-2">
-        <option value="beta_user">beta_user</option>
-        <option value="beta_admin">beta_admin</option>
-      </select>
-      <button onClick={onApprove} disabled={pending} className="bg-green-500/80 hover:bg-green-500 text-surface-base rounded px-3 py-1 text-xs font-bold">Approve</button>
-      <input value={reason} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReason(e.target.value)} placeholder="Reason" className="bg-surface-base border border-white/10 rounded px-2 py-1 text-xs mr-2" />
-      <button onClick={onDeny} disabled={pending} className="bg-red-500/80 hover:bg-red-500 text-surface-base rounded px-3 py-1 text-xs font-bold">Deny</button>
-    </div>
-  );
 }
 
 interface AccessRequest {
@@ -111,7 +26,8 @@ interface AccessRequest {
   status: string;
 }
 
-export default async function AdminRequestsPage({ searchParams }: { searchParams?: Record<string, string> }) {
+export default async function AdminRequestsPage({ searchParams }: { searchParams?: Promise<Record<string, string>> }) {
+  const resolvedSearchParams = await searchParams;
   const token = (await cookies()).get('sb-access-token')?.value;
   let actorId: string | null = null;
   if (token) {
@@ -143,11 +59,11 @@ export default async function AdminRequestsPage({ searchParams }: { searchParams
       </div>
     );
   }
-  const page = Number(searchParams?.page || 1);
-  const perPage = Number(searchParams?.perPage || 25);
-  const filterRole = searchParams?.role || 'all';
-  const sortKey = searchParams?.sort || 'created_at';
-  const sortDir = (searchParams?.dir || 'asc') as 'asc' | 'desc';
+  const page = Number(resolvedSearchParams?.page || 1);
+  const perPage = Number(resolvedSearchParams?.perPage || 25);
+  const filterRole = resolvedSearchParams?.role || 'all';
+  const sortKey = resolvedSearchParams?.sort || 'created_at';
+  const sortDir = (resolvedSearchParams?.dir || 'asc') as 'asc' | 'desc';
 
   const { items: pageItems, total } = await listPendingAccessRequestsPaginated({
     page,
@@ -172,7 +88,7 @@ export default async function AdminRequestsPage({ searchParams }: { searchParams
         </div>
 
         <div className="flex gap-3 items-center">
-          <form method="get" className="flex gap-3">
+          <form className="flex gap-3">
             <select name="role" defaultValue={filterRole} className="bg-surface-elevated border border-white/10 rounded px-3 py-2 text-sm">
               <option value="all">All Roles</option>
               <option value="beta_user">Beta User</option>
@@ -220,7 +136,7 @@ export default async function AdminRequestsPage({ searchParams }: { searchParams
         </div>
 
         <div className="flex items-center justify-between">
-          <form method="get">
+          <form>
             <input type="hidden" name="page" value={Math.max(1, page - 1)} />
             <input type="hidden" name="role" value={filterRole} />
             <input type="hidden" name="sort" value={sortKey} />
@@ -231,7 +147,7 @@ export default async function AdminRequestsPage({ searchParams }: { searchParams
             {Array.from({ length: pageCount }).map((_, i) => {
               const p = i + 1;
               return (
-                <form key={p} method="get">
+                <form key={p}>
                   <input type="hidden" name="page" value={p} />
                   <input type="hidden" name="role" value={filterRole} />
                   <input type="hidden" name="sort" value={sortKey} />
@@ -242,7 +158,7 @@ export default async function AdminRequestsPage({ searchParams }: { searchParams
               );
             })}
           </div>
-          <form method="get">
+          <form>
             <input type="hidden" name="page" value={Math.min(pageCount, page + 1)} />
             <input type="hidden" name="role" value={filterRole} />
             <input type="hidden" name="sort" value={sortKey} />

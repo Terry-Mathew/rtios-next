@@ -8,6 +8,7 @@
  */
 
 import { GoogleGenAI, Type } from "@google/genai";
+import { getAuthenticatedUser } from '@/src/utils/supabase/server';
 import type { JobInfo } from '@/src/domains/jobs/types';
 import type {
   AnalysisResult,
@@ -41,6 +42,7 @@ const ai = new GoogleGenAI({ apiKey });
 // 1. Extract Text from Resume (PDF)
 export const extractResumeText = async (fileBase64: string, mimeType: string = 'application/pdf'): Promise<string> => {
   try {
+    await getAuthenticatedUser();
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: [
@@ -73,6 +75,7 @@ export const extractResumeText = async (fileBase64: string, mimeType: string = '
 // 2. Company Research
 export const researchCompany = async (companyName: string, companyUrl?: string): Promise<ResearchResult> => {
   try {
+    await getAuthenticatedUser();
     const prompt = `Research the company "${companyName}"${companyUrl ? ` (${companyUrl})` : ''}.
     Focus on:
     1. Mission and values.
@@ -121,6 +124,7 @@ export const analyzeResume = async (
   userLinks?: { portfolio?: string, linkedin?: string }
 ): Promise<AnalysisResult> => {
   try {
+    await getAuthenticatedUser();
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: `
@@ -183,6 +187,7 @@ export const generateCoverLetter = async (
   userLinks?: { portfolio?: string, linkedin?: string }
 ): Promise<string> => {
   try {
+    await getAuthenticatedUser();
     const prompt = `
       You are an expert career coach and professional writer specializing in creating compelling cover letters that get candidates interviews. Your task is to craft a cover letter that makes hiring managers think "I need to meet this person."
 
@@ -280,6 +285,7 @@ export const generateLinkedInMessage = async (
   researchSummary: string
 ): Promise<string> => {
   try {
+    await getAuthenticatedUser();
     const prompt = `
       You are a LinkedIn messaging strategist specializing in connecting with ${input.connectionStatus === 'new' ? 'new connections' : 'existing connections'}. 
       Your messages get 40%+ response rates by striking the perfect balance between professional and personable, interested but not desperate, informative but concise.
@@ -374,6 +380,7 @@ export const generateInterviewQuestions = async (
   userLinks: { portfolio?: string; linkedin?: string } = {}
 ): Promise<InterviewQuestion[]> => {
   try {
+    await getAuthenticatedUser();
     const prompt = `
       You are an elite interview coach for senior-level Product and Data Product Management roles.
 
@@ -496,6 +503,7 @@ export const generateInterviewQuestions = async (
 // 7. Extract Job Details from URL
 export const extractJobFromUrl = async (url: string): Promise<JobInfo> => {
   try {
+    await getAuthenticatedUser();
     const prompt = `
         I need to extract job details from this specific job posting URL: ${url}
         
