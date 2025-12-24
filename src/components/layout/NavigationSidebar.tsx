@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Hexagon, LayoutGrid, FileText, MessageSquare, Brain } from 'lucide-react';
+import { Hexagon, LayoutGrid, FileText, MessageSquare, Brain, Shield } from 'lucide-react';
 import { useAppStore } from '@/src/stores/appStore';
 
 interface NavigationSidebarProps {
@@ -13,6 +13,21 @@ export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
     onSnapshotBeforeDashboard
 }) => {
     const router = useRouter();
+    const [isAdmin, setIsAdmin] = useState(false);
+
+    // Check if user is admin (client-side check for UI only, server validates)
+    useEffect(() => {
+        const checkAdmin = async () => {
+            try {
+                const res = await fetch('/api/admin/check-access');
+                const data = await res.json();
+                setIsAdmin(data.isAdmin || false);
+            } catch {
+                setIsAdmin(false);
+            }
+        };
+        checkAdmin();
+    }, []);
 
     // Get navigation state from store
     const currentView = useAppStore((s) => s.currentView);
@@ -31,6 +46,11 @@ export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
     const handleModuleClick = (module: 'coverLetter' | 'linkedin' | 'interview') => {
         setActiveModule(module);
         router.push('/app');
+    };
+
+    // Handler for admin navigation
+    const handleAdminClick = () => {
+        router.push('/admin');
     };
 
     return (
@@ -114,6 +134,26 @@ export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
                         }`} />
                     <span className="text-[8px] lg:text-[9px] font-interstate uppercase font-bold">Prep</span>
                 </button>
+
+                {/* Admin Button - Only visible to admins */}
+                {isAdmin && (
+                    <>
+                        <div className="hidden lg:block h-px w-full bg-white/10 my-2"></div>
+                        <button
+                            onClick={handleAdminClick}
+                            className={`group flex flex-col items-center gap-0.5 lg:gap-1.5 p-2 lg:p-2 rounded-lg transition-all min-w-[52px] ${currentView === 'admin'
+                                    ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                                    : 'text-red-400/60 hover:text-red-400 hover:bg-red-500/10'
+                                }`}
+                        >
+                            <Shield className={`w-5 h-5 ${currentView === 'admin'
+                                    ? 'text-red-400'
+                                    : 'text-red-400/60 group-hover:text-red-400'
+                                }`} />
+                            <span className="text-[8px] lg:text-[9px] font-interstate uppercase font-bold">Admin</span>
+                        </button>
+                    </>
+                )}
             </div>
         </nav>
     );

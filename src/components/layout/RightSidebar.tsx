@@ -7,6 +7,7 @@ import { useWorkspaceStore } from '@/src/stores/workspaceStore';
 import type { SavedResume, UserProfile, JobInfo, AppStatus } from '@/src/types';
 import LoadingFallback from '@/src/components/shared/LoadingFallback';
 import { X } from 'lucide-react';
+import UsageCounter from '@/src/components/layout/UsageCounter';
 
 // Lazy load heavy chart component
 const ResumeAnalysisDisplay = lazy(() => import('@/src/components/features/analysis/ResumeAnalysisDisplay'));
@@ -122,6 +123,9 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                         Intel
                     </button>
                 </div>
+
+                {/* Usage Counter - Shows free tier usage */}
+                <UsageCounter />
 
                 {/* Sidebar Content */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar">

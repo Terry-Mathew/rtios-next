@@ -9,6 +9,7 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 import { getAuthenticatedUser } from '@/src/utils/supabase/server';
+import type { SupabaseClient } from '@supabase/supabase-js'; // Added import for types
 import type { JobInfo } from '@/src/domains/jobs/types';
 import type {
   AnalysisResult,
@@ -18,6 +19,8 @@ import type {
   InterviewQuestion
 } from '@/src/domains/intelligence/types';
 import { extractWebSources } from '@/src/types/gemini';
+import { checkRateLimit } from '@/src/utils/rateLimit';
+import { aiCache, generateCacheKey } from '@/src/utils/aiCache';
 
 // Server-side API key only (no client-side fallback)
 const apiKey = process.env.GEMINI_API_KEY;
@@ -39,10 +42,50 @@ if (!apiKey) {
 
 const ai = new GoogleGenAI({ apiKey });
 
+// Helper: Check and Increment Feature Usage Limit (3x per job)
+const checkFeatureLimit = async (
+  supabase: SupabaseClient,
+  userId: string,
+  jobId: string | undefined,
+  outputType: 'resume_scan' | 'company_research' | 'cover_letter' | 'linkedin_message' | 'interview_prep'
+) => {
+  // 1. Admin Bypass
+  // Note: We already check role inside the actions for Rate Limit exemption, 
+  // but we need to check again here or pass the role. 
+  // Optimization: Single query for role in the main action could serve both violations.
+  // For safety, re-querying is fine (Supabase caches somewhat or it's fast).
+
+  const { data: userRole } = await supabase.from('users').select('role').eq('id', userId).single();
+  if (userRole?.role === 'admin') return;
+
+  if (!jobId) return;
+
+  // 2. Check Limit
+  const { data: output } = await supabase
+    .from('job_outputs')
+    .select('generation_count')
+    .match({ job_id: jobId, type: outputType })
+    .single();
+
+  if (output && (output.generation_count || 0) >= 3) {
+    throw new Error(`Usage limit reached: You can only regenerate this feature 3 times per job application.`);
+  }
+
+  // 3. Increment (Optimistic)
+  await supabase.rpc('increment_job_output_generation', { p_job_id: jobId, p_type: outputType });
+};
+
 // 1. Extract Text from Resume (PDF)
 export const extractResumeText = async (fileBase64: string, mimeType: string = 'application/pdf'): Promise<string> => {
   try {
-    await getAuthenticatedUser();
+    const { user, supabase } = await getAuthenticatedUser();
+
+    // Rate Limiting (Admin Exempt)
+    const { data: currentRole } = await supabase.from('users').select('role').eq('id', user.id).single();
+    if (currentRole?.role !== 'admin') {
+      await checkRateLimit(user.id, 'resumeExtraction');
+    }
+
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: [
@@ -67,6 +110,7 @@ export const extractResumeText = async (fileBase64: string, mimeType: string = '
     });
     return response.text || "";
   } catch (err: unknown) {
+    if (err instanceof Error && err.message.includes('Rate limit')) throw err;
     console.error("Error parsing resume:", err);
     throw new Error(`Failed to extract text from resume: ${err instanceof Error ? err.message : String(err)}`);
   }
@@ -75,7 +119,22 @@ export const extractResumeText = async (fileBase64: string, mimeType: string = '
 // 2. Company Research
 export const researchCompany = async (companyName: string, companyUrl?: string): Promise<ResearchResult> => {
   try {
-    await getAuthenticatedUser();
+    const { user, supabase } = await getAuthenticatedUser();
+
+    // Rate limiting (Admin Exempt)
+    const { data: currentRole } = await supabase.from('users').select('role').eq('id', user.id).single();
+    if (currentRole?.role !== 'admin') {
+      await checkRateLimit(user.id, 'companyResearch');
+    }
+
+    // Check cache first
+    const cacheKey = generateCacheKey('companyResearch', { companyName, companyUrl: companyUrl || '' });
+    const cached = aiCache.companyResearch.get(cacheKey);
+    if (cached) {
+      console.log('[Cache Hit] Company research for:', companyName);
+      return cached as ResearchResult;
+    }
+
     const prompt = `Research the company "${companyName}"${companyUrl ? ` (${companyUrl})` : ''}.
     Focus on:
     1. Mission and values.
@@ -107,12 +166,21 @@ export const researchCompany = async (companyName: string, companyUrl?: string):
     // Remove duplicates
     const uniqueSources = sources.filter((v, i, a) => a.findIndex(t => (t.uri === v.uri)) === i);
 
-    return {
+    const result = {
       summary: response.text || "No research data available.",
       sources: uniqueSources
     };
+
+    // Cache for 24 hours
+    aiCache.companyResearch.set(cacheKey, result);
+
+    return result;
   } catch (err: unknown) {
     console.error("Error researching company:", err);
+    // Re-throw rate limit errors so user sees them
+    if (err instanceof Error && err.message.includes('Rate limit')) {
+      throw err;
+    }
     return { summary: "Could not complete company research due to an error.", sources: [] };
   }
 };
@@ -124,7 +192,17 @@ export const analyzeResume = async (
   userLinks?: { portfolio?: string, linkedin?: string }
 ): Promise<AnalysisResult> => {
   try {
-    await getAuthenticatedUser();
+    const { user, supabase } = await getAuthenticatedUser();
+
+    // Rate Limiting (Admin Exempt)
+    const { data: currentRole } = await supabase.from('users').select('role').eq('id', user.id).single();
+    if (currentRole?.role !== 'admin') {
+      await checkRateLimit(user.id, 'resumeAnalysis');
+    }
+
+    // Feature Usage Limit (3x per job)
+    await checkFeatureLimit(supabase, user.id, jobInfo.id, 'resume_scan');
+
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: `
@@ -187,7 +265,17 @@ export const generateCoverLetter = async (
   userLinks?: { portfolio?: string, linkedin?: string }
 ): Promise<string> => {
   try {
-    await getAuthenticatedUser();
+    const { user, supabase } = await getAuthenticatedUser();
+
+    // Rate Limiting (Admin Exempt)
+    const { data: currentRole } = await supabase.from('users').select('role').eq('id', user.id).single();
+    if (currentRole?.role !== 'admin') {
+      await checkRateLimit(user.id, 'coverLetter');
+    }
+
+    // Feature Usage Limit (3x per job)
+    await checkFeatureLimit(supabase, user.id, jobInfo.id, 'cover_letter');
+
     const prompt = `
       You are an expert career coach and professional writer specializing in creating compelling cover letters that get candidates interviews. Your task is to craft a cover letter that makes hiring managers think "I need to meet this person."
 
@@ -285,7 +373,17 @@ export const generateLinkedInMessage = async (
   researchSummary: string
 ): Promise<string> => {
   try {
-    await getAuthenticatedUser();
+    const { user, supabase } = await getAuthenticatedUser();
+
+    // Rate Limiting (Admin Exempt)
+    const { data: currentRole } = await supabase.from('users').select('role').eq('id', user.id).single();
+    if (currentRole?.role !== 'admin') {
+      await checkRateLimit(user.id, 'linkedInMessage');
+    }
+
+    // Feature Usage Limit (3x per job)
+    await checkFeatureLimit(supabase, user.id, jobInfo.id, 'linkedin_message');
+
     const prompt = `
       You are a LinkedIn messaging strategist specializing in connecting with ${input.connectionStatus === 'new' ? 'new connections' : 'existing connections'}. 
       Your messages get 40%+ response rates by striking the perfect balance between professional and personable, interested but not desperate, informative but concise.
@@ -380,7 +478,17 @@ export const generateInterviewQuestions = async (
   userLinks: { portfolio?: string; linkedin?: string } = {}
 ): Promise<InterviewQuestion[]> => {
   try {
-    await getAuthenticatedUser();
+    const { user, supabase } = await getAuthenticatedUser();
+
+    // Rate Limiting (Admin Exempt)
+    const { data: currentRole } = await supabase.from('users').select('role').eq('id', user.id).single();
+    if (currentRole?.role !== 'admin') {
+      await checkRateLimit(user.id, 'interviewPrep');
+    }
+
+    // Feature Usage Limit (3x per job)
+    await checkFeatureLimit(supabase, user.id, jobInfo.id, 'interview_prep');
+
     const prompt = `
       You are an elite interview coach for senior-level Product and Data Product Management roles.
 
@@ -503,7 +611,14 @@ export const generateInterviewQuestions = async (
 // 7. Extract Job Details from URL
 export const extractJobFromUrl = async (url: string): Promise<JobInfo> => {
   try {
-    await getAuthenticatedUser();
+    const { user, supabase } = await getAuthenticatedUser();
+
+    // Rate Limiting (Admin Exempt)
+    const { data: currentRole } = await supabase.from('users').select('role').eq('id', user.id).single();
+    if (currentRole?.role !== 'admin') {
+      await checkRateLimit(user.id, 'jobExtraction');
+    }
+
     const prompt = `
         I need to extract job details from this specific job posting URL: ${url}
         
@@ -517,7 +632,7 @@ export const extractJobFromUrl = async (url: string): Promise<JobInfo> => {
         `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview', // Using pro model for better complex extraction/reasoning with search
+      model: 'gemini-2.5-flash', // Using flash model - sufficient for extraction with search, stays on free tier
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],

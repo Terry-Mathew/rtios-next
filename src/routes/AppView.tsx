@@ -28,6 +28,7 @@ import { FeatureErrorBoundary } from '@/src/components/errors/FeatureErrorBounda
 import { ToastContainer } from '@/src/components/ui/ToastContainer';
 import { errorService } from '@/src/services/errorService';
 import { useToastStore } from '@/src/stores/toastStore';
+import UpgradeModal from '@/src/components/modals/UpgradeModal';
 
 const AppView: React.FC = () => {
     const router = useRouter();
@@ -39,6 +40,30 @@ const AppView: React.FC = () => {
 
     // --- Mobile Sidebar State ---
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+    // --- Upgrade Modal State ---
+    const [upgradeModalState, setUpgradeModalState] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        isLifetimeLimit: false,
+        totalUsed: 0,
+        totalAllowed: 2
+    });
+
+    // Listen for upgrade modal trigger
+    useEffect(() => {
+        const handleShowUpgradeModal = (event: Event) => {
+            const customEvent = event as CustomEvent;
+            setUpgradeModalState({
+                isOpen: true,
+                ...customEvent.detail
+            });
+        };
+
+        window.addEventListener('show-upgrade-modal', handleShowUpgradeModal);
+        return () => window.removeEventListener('show-upgrade-modal', handleShowUpgradeModal);
+    }, []);
 
     // Sync appStore with current route
     useEffect(() => {
@@ -150,8 +175,6 @@ const AppView: React.FC = () => {
             }
 
             // Switch Sidebar to Analysis on completion
-            setActiveSidebarTab('analysis');
-
             setActiveSidebarTab('analysis');
 
         } catch (e: unknown) {
@@ -278,6 +301,17 @@ const AppView: React.FC = () => {
                 </button>
 
                 <ToastContainer />
+
+                {/* Upgrade Modal */}
+                <UpgradeModal
+                    isOpen={upgradeModalState.isOpen}
+                    onClose={() => setUpgradeModalState(prev => ({ ...prev, isOpen: false }))}
+                    title={upgradeModalState.title}
+                    message={upgradeModalState.message}
+                    isLifetimeLimit={upgradeModalState.isLifetimeLimit}
+                    totalUsed={upgradeModalState.totalUsed}
+                    totalAllowed={upgradeModalState.totalAllowed}
+                />
             </div>
         </ErrorBoundary>
     );

@@ -10,7 +10,7 @@
  * and provides a single source of truth for job management operations.
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useJobApplications } from '@/src/domains/jobs/hooks/useJobApplications';
 import { useWorkspaceStore } from '@/src/stores/workspaceStore';
@@ -19,6 +19,7 @@ import { AppStatus } from '@/src/types';
 import type { JobInfo } from '@/src/types';
 import { errorService } from '@/src/services/errorService';
 import { useToastStore } from '@/src/stores/toastStore';
+import { checkJobCreationLimit } from '@/src/utils/jobLimiter';
 
 interface UseJobManagementReturn {
     // Data
@@ -101,9 +102,48 @@ export const useJobManagement = (): UseJobManagementReturn => {
         }
     }, [activeJobId, updateJobOutputs, appState]);
 
-    // Add new job (snapshots current first)
+    // Add new job (with lifetime limit check)
     const addJob = useCallback(async (job: JobInfo) => {
         try {
+            // Check lifetime limit BEFORE creating job
+            const limit = await checkJobCreationLimit();
+
+            if (!limit.allowed) {
+                // Trigger upgrade modal via custom event
+                window.dispatchEvent(new CustomEvent('show-upgrade-modal', {
+                    detail: {
+                        title: 'Free Trial Complete',
+                        message: limit.message || 'Free trial limit reached',
+                        isLifetimeLimit: true,
+                        totalUsed: limit.totalUsed,
+                        totalAllowed: limit.totalAllowed
+                    }
+                }));
+
+                useToastStore.getState().addToast({
+                    type: 'error',
+                    message: limit.message || 'Job creation limit reached'
+                });
+
+                throw new Error('Job creation limit reached');
+            }
+
+            // Show warning when approaching limit (1 remaining)
+            const remaining = limit.totalAllowed - limit.totalUsed - 1;
+            if (remaining === 1 && !limit.isAdmin) {
+                useToastStore.getState().addToast({
+                    type: 'warning',
+                    message: `You have 1 free job application remaining`,
+                    duration: 6000
+                });
+            } else if (remaining === 0 && !limit.isAdmin) {
+                useToastStore.getState().addToast({
+                    type: 'warning',
+                    message: `This is your last free job application!`,
+                    duration: 6000
+                });
+            }
+
             if (activeJobId) snapshotCurrentJob();
             await addJobToApplications(job);
             clearWorkspaceStore(appState.linkedIn.input);
@@ -115,7 +155,10 @@ export const useJobManagement = (): UseJobManagementReturn => {
                 action: 'addJob',
                 jobTitle: job.title
             });
-            useToastStore.getState().addToast({ type: 'error', message });
+            // Don't show duplicate error if it's a limit error
+            if (!(error instanceof Error && error.message === 'Job creation limit reached')) {
+                useToastStore.getState().addToast({ type: 'error', message });
+            }
         }
     }, [activeJobId, snapshotCurrentJob, addJobToApplications, clearWorkspaceStore, setStatus, appState]);
 

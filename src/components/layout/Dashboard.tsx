@@ -80,7 +80,7 @@ const ProfileCard: React.FC<{ userProfile: UserProfile; onUpdateProfile: (p: Use
                         <h3 className="font-tiempos text-lg font-bold text-text-primary leading-tight">
                             {isEditing ? 'Edit Profile' : (fullName || 'Your Profile')}
                         </h3>
-                        {!isEditing && <p className="text-[10px] font-interstate text-text-secondary">{userProfile.email}</p>}
+
                     </div>
                 </div>
                 {!isEditing ? (

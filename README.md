@@ -70,13 +70,22 @@ cd rtios-next/my-app
 Create a `.env.local` file in the root directory:
 
 ```env
-# Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+# Supabase (Public - Safe for Client-Side)
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
-# Google Gemini API (Server-Side)
+# Google Gemini API (Server-Side ONLY)
 GEMINI_API_KEY=your_gemini_api_key
+
+# Optional: Advanced Configuration
+# SUPABASE_SERVICE_ROLE_KEY=your_service_role_key  # Only needed for admin operations
+# NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_pub_key # Alternative to ANON_KEY (v0.8.0+)
 ```
+
+> **⚠️ Security Warning**:  
+> - Never commit `.env.local` to git (already in `.gitignore`)
+> - `NEXT_PUBLIC_*` variables are exposed to the browser
+> - `GEMINI_API_KEY` stays server-side only (do NOT use `NEXT_PUBLIC_` prefix)
 
 ### 3. Install Dependencies
 ```bash

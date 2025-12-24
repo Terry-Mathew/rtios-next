@@ -504,6 +504,77 @@ Below is a quick-reference for the core features we've implemented, with the pro
 
 ---
 
+---
+
+## 41. Admin "God Mode" (Role-Based Bypass)
+**The Problem**: Administrators attempting to test or debug the application frequently hit the same rate limits and resource quotas (e.g., job limits, API calls) as standard users, hindering support and development.
+**The Solution**: Implement a centralized "God Mode" logic where users with `role: 'admin'` explicitly bypass all rate limit checks and resource counting logic.
+
+### Learnings:
+- **Explicit Bypass**: Don't just give admins "higher" limits; give them an infinite/bypass path in the code (e.g., `if (isAdmin) return;`).
+- **Unified Check**: Perform the role check once at the start of the action to save DB calls.
+
+### Prompt to Implement:
+> "Implement Admin 'God Mode' for resource limits. In all rate-limiting and quota-checking functions (like `jobLimiter.ts` and `rateLimit.ts`), add an initial check for the user's role. If `role === 'admin'`, immediately return `{ allowed: true }` or skip the limit check entirely, ensuring admins can generate unlimited resources for testing."
+
+---
+
+## 42. Admin Impersonation (Magic Link Pattern)
+**The Problem**: diagnosing user-specific bugs (like broken UI states or data issues) is nearly impossible without being able to see exactly what the user sees.
+**The Solution**: Create a secure administration tool that uses the Supabase `service_role` key to generate a magic login link for any target user, allowing the admin to log in as that user (in an Incognito window).
+
+### Learnings:
+- **Service Role Required**: Standard admin clients cannot generate links for other users; you must use `createClient(url, SERVICE_ROLE_KEY)`.
+- **Incognito is Key**: Admins must use Incognito windows to open the link, or they will overwrite their own admin session cookies.
+- **Copy-to-Clipboard**: Providing a "Copy Link" button is better than auto-redirecting, as it gives the admin control over where to open the session.
+
+### Prompt to Implement:
+> "Implement a secure Impersonation feature. 1) Create an API route `/api/admin/impersonate`. 2) Verify the caller is an Admin. 3) Use `supabaseAdmin.auth.admin.generateLink({ type: 'magiclink', email: targetEmail })` to create a login URL. 4) Return this URL to the client. 5) Create a client button that calls this API and copies the resulting link to the clipboard with a warning to 'Open in Incognito'."
+
+---
+
+## 43. Feature-Specific Usage Limits (RPC + DB)
+**The Problem**: Global rate limits (e.g., 20 requests/hour) protect the API but don't prevent users from "spinning their wheels" or abusing a specific feature (like regenerating a cover letter 50 times) which incurs high costs.
+**The Solution**: Implement granular limits (e.g., "Max 3 regenerations per feature per job") by tracking usage in a dedicated database column (`generation_count`) and managing it via an atomic RPC function.
+
+### Learnings:
+- **Atomic Increments**: Use a Postgres Function (RPC) to check and increment the counter in one operation to prevent race conditions.
+- **Per-Context Limits**: Tying limits to a specific context (like a `job_id`) is more effective for workflow apps than global usage caps.
+- **Optimistic Limit Checking**: Check the limit *before* calling the expensive AI API.
+
+### Prompt to Implement:
+> "Implement granular usage limits. 1) Add a `generation_count` column to the `job_outputs` table. 2) Create a Postgres RPC `increment_job_output_generation(job_id, type)` that atomically increments this count. 3) In your generation action: Check if `count >= 3`. If so, throw an error. If not, proceed with generation and call the RPC to increment."
+
+---
+
+## 44. Unified User Management (Single Source)
+**The Problem**: Maintaining separate tables for "Auth Users", "Public Profiles", and "Admin/Beta Lists" leads to synchronization nightmares and data consistency bugs.
+**The Solution**: Consolidate all user metadata (roles, status, names) into a single `public.users` table that mirrors `auth.users`. Use this as the Single Source of Truth for application logic.
+
+### Learnings:
+- **Triggers are Essential**: Use a Postgres Trigger on `auth.users` insert to automatically create the corresponding `public.users` row.
+- **Role Column**: Store roles (`admin`, `user`) directly in `public.users`, not in a separate mapping table.
+- **Status Column**: Manage account status (`active`, `banned`) in this same table for easy moderation logic.
+
+### Prompt to Implement:
+> "Refactor user management to a Single Source of Truth. 1) Ensure a `public.users` table exists with `id`, `email`, `role`, and `status`. 2) Create a Trigger on `auth.users` to automatically insert into `public.users` on signup. 3) Update all application logic (admin checks, profile fetching) to query `public.users` instead of separate tables. 4) Drop any legacy tables like `beta_users`."
+
+---
+
+## 45. Interactive Admin Tables (Client Wrappers)
+**The Problem**: Admin dashboards often require complex data tables (best rendered Server-Side for speed/SEO) but also need instant interactivity (Ban, Delete, Impersonate buttons) which requires Client-Side logic.
+**The Solution**: Use the "Client Wrapper" pattern. Render the table and data on the server, but insert small, specific Client Components (`'use client'`) into the table cells to handle the interactive actions.
+
+### Learnings:
+- **Isolation**: Keep the "Client" part as small as possible (just the button and its handler).
+- **Props Passing**: Pass the necessary IDs (e.g., `userId`) from the Server Parent to the Client Child.
+- **No Data Fetching in Child**: The child component should only handle the *Action* (API call), not fetch the data itself.
+
+### Prompt to Implement:
+> "Build a high-performance Admin Table. 1) Fetch user data in the `page.tsx` Server Component. 2) Render the HTML table rows server-side. 3) For current actions, create isolated components: `ImpersonateButton.tsx`, `BanButton.tsx`. 4) Pass `userId` and `initialStatus` as props to these buttons. 5) The buttons should contain their own generic `fetch` logic and local state (loading/success) without forcing the entire page to be a Client Component."
+
+---
+
 # The "Master Blueprint" Implementation Prompt
 
 Use this prompt when starting a new project or a major feature area to ensure the architecture remains consistent.

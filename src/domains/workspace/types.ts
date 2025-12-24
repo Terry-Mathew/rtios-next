@@ -11,12 +11,12 @@
 
 import type { SavedResume } from '@/src/domains/career/types';
 import type { JobInfo } from '@/src/domains/jobs/types';
-import type { 
-  ResearchResult, 
-  AnalysisResult, 
-  ToneType, 
+import type {
+  ResearchResult,
+  AnalysisResult,
+  ToneType,
   LinkedInMessageInput,
-  InterviewQuestion 
+  InterviewQuestion
 } from '@/src/domains/intelligence/types';
 
 // Re-export ToneType for convenience (used in CoverLetterState)
@@ -55,7 +55,7 @@ export enum AppStatus {
   ERROR = 'error',
 }
 
-export type View = 'landing' | 'app' | 'dashboard' | 'pricing' | 'terms' | 'privacy' | 'cookie' | 'about';
+export type View = 'landing' | 'app' | 'dashboard' | 'pricing' | 'terms' | 'privacy' | 'cookie' | 'about' | 'admin';
 
 export interface AppState {
   status: AppStatus;
