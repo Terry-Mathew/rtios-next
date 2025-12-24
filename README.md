@@ -77,8 +77,10 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 # Google Gemini API (Server-Side ONLY)
 GEMINI_API_KEY=your_gemini_api_key
 
-# Optional: Advanced Configuration
-# SUPABASE_SERVICE_ROLE_KEY=your_service_role_key  # Only needed for admin operations
+# Admin Features (Required for Impersonation/Banning)
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Optional
 # NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_pub_key # Alternative to ANON_KEY (v0.8.0+)
 ```
 
