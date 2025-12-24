@@ -16,24 +16,27 @@ const ALLOWED_ELEMENTS = [
 ];
 
 const SafeLink: React.FC<{ href?: string; children?: React.ReactNode }> = ({ href, children }) => {
+    let url: URL;
     try {
-        const url = new URL(href || '', typeof window !== 'undefined' ? window.location.origin : '');
-        if (!['http:', 'https:'].includes(url.protocol)) {
-            return <span>{children}</span>;
-        }
-        return (
-            <a
-                href={url.toString()}
-                target="_blank"
-                rel="noopener noreferrer nofollow"
-                className="text-accent hover:underline"
-            >
-                {children}
-            </a>
-        );
+        url = new URL(href || '', typeof window !== 'undefined' ? window.location.origin : '');
     } catch {
         return <span>{children}</span>;
     }
+
+    if (!['http:', 'https:'].includes(url.protocol)) {
+        return <span>{children}</span>;
+    }
+
+    return (
+        <a
+            href={url.toString()}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            className="text-accent hover:underline"
+        >
+            {children}
+        </a>
+    );
 };
 
 const InterviewQuestionCard: React.FC<{ question: InterviewQuestion; index: number }> = ({ question, index }) => {

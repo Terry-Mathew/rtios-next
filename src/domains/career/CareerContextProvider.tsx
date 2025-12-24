@@ -79,7 +79,7 @@ export const CareerContextProvider: React.FC<{ children: React.ReactNode }> = ({
                 if (storedResumes && mounted) {
                     const parsed = JSON.parse(storedResumes);
                     // Revive dates
-                    setResumes(parsed.map((r: any) => ({ ...r, uploadDate: new Date(r.uploadDate) })));
+                    setResumes(parsed.map((r: SavedResume) => ({ ...r, uploadDate: new Date(r.uploadDate) })));
                 }
                 if (storedProfile && mounted) {
                     const parsed = JSON.parse(storedProfile);
@@ -140,9 +140,10 @@ export const CareerContextProvider: React.FC<{ children: React.ReactNode }> = ({
             setUserProfile(prev => ({ ...prev, activeResumeId: newResume.id }));
 
             addToast({ type: 'success', message: 'Resume uploaded successfully' });
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
             console.error('Upload failed:', error);
-            addToast({ type: 'error', message: `Upload failed: ${error.message}` });
+            addToast({ type: 'error', message: `Upload failed: ${errorMessage}` });
             throw error;
         } finally {
             setIsLoading(false);
@@ -159,8 +160,9 @@ export const CareerContextProvider: React.FC<{ children: React.ReactNode }> = ({
                 await careerService.updateProfile({ activeResumeId: null });
             }
             addToast({ type: 'success', message: 'Resume deleted' });
-        } catch (error: any) {
-            addToast({ type: 'error', message: `Delete failed: ${error.message}` });
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            addToast({ type: 'error', message: `Delete failed: ${errorMessage}` });
         }
     }, [activeResumeId, addToast]);
 
@@ -169,7 +171,7 @@ export const CareerContextProvider: React.FC<{ children: React.ReactNode }> = ({
         setUserProfile(prev => ({ ...prev, activeResumeId: id }));
         try {
             await careerService.updateProfile({ activeResumeId: id });
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Failed to sync selection:', err);
         }
     }, []);
@@ -180,7 +182,7 @@ export const CareerContextProvider: React.FC<{ children: React.ReactNode }> = ({
         try {
             await careerService.updateProfile(updates);
             addToast({ type: 'success', message: 'Profile updated' });
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Profile update failed:', err);
             addToast({ type: 'error', message: 'Failed to update profile' });
             // Revert? (Complex, skipping for now)

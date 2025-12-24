@@ -17,33 +17,35 @@ interface JobItemProps {
     onSelect: (jobId: string) => void;
 }
 
-const JobItem = React.memo(({ job, isActive, onSelect }: JobItemProps) => (
-    <button
-        onClick={() => onSelect(job.id!)}
-        className="w-full text-left p-4 hover:bg-white/5 transition-colors border-b border-white/5 flex items-start justify-between group"
-    >
-        <div>
-            <div className={`font-tiempos text-sm font-bold mb-1 ${isActive ? 'text-accent' : 'text-text-primary'}`}>
-                {job.contextName || job.title}
-            </div>
-            <div className="flex flex-col gap-0.5">
-                <div className="font-interstate text-[10px] text-text-secondary">
-                    {job.company} • {job.title}
+const JobItem = React.memo(function JobItem({ job, isActive, onSelect }: JobItemProps) {
+    return (
+        <button
+            onClick={() => onSelect(job.id!)}
+            className="w-full text-left p-4 hover:bg-white/5 transition-colors border-b border-white/5 flex items-start justify-between group"
+        >
+            <div>
+                <div className={`font-tiempos text-sm font-bold mb-1 ${isActive ? 'text-accent' : 'text-text-primary'}`}>
+                    {job.contextName || job.title}
+                </div>
+                <div className="flex flex-col gap-0.5">
+                    <div className="font-interstate text-[10px] text-text-secondary">
+                        {job.company} • {job.title}
+                    </div>
                 </div>
             </div>
-        </div>
-        {isActive && (
-            <Check className="w-4 h-4 text-accent" />
-        )}
-    </button>
-));
+            {isActive && (
+                <Check className="w-4 h-4 text-accent" />
+            )}
+        </button>
+    );
+});
 
-const ContextSwitcher: React.FC<ContextSwitcherProps> = ({
+const ContextSwitcher: React.FC<ContextSwitcherProps> = function ContextSwitcher({
     jobs,
     activeJobId,
     resumes,
     onSelectStrategy,
-}) => {
+}) {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
