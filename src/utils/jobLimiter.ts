@@ -34,7 +34,7 @@ export async function checkJobCreationLimit(): Promise<JobLimitResult> {
                         cookiesToSet.forEach(({ name, value, options }) =>
                             cookieStore.set(name, value, options)
                         );
-                    } catch { }
+                    } catch { /* Cookie setting may fail in SSR - safe to ignore */ }
                 },
             },
         }

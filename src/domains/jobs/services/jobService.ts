@@ -6,6 +6,26 @@ import type { CoverLetterState, LinkedInState, InterviewPrepState } from '@/src/
 // Enums mapping types in code to DB enums
 type OutputType = 'resume_scan' | 'company_research' | 'cover_letter' | 'linkedin_message' | 'interview_prep';
 
+// Type definitions for database rows
+interface JobOutputRow {
+    type: OutputType;
+    content: unknown;
+    created_at: string;
+}
+
+interface JobRow {
+    id: string;
+    title: string;
+    company: string;
+    description: string | null;
+    company_url: string | null;
+    source_url: string | null;
+    context_name: string | null;
+    resume_id: string | null;
+    created_at: string;
+    job_outputs: JobOutputRow[];
+}
+
 /**
  * Job Service - Handles Persistence for Jobs and their Intelligence Outputs
  */
@@ -40,17 +60,17 @@ export const fetchJobs = async (): Promise<JobInfo[]> => {
     }
 
     // Transform DB rows to JobInfo objects
-    return data.map((row: any) => {
+    return (data as JobRow[]).map((row) => {
         // Pivot the outputs array back into an object
         const outputs: JobOutputs = {};
         if (Array.isArray(row.job_outputs)) {
-            row.job_outputs.forEach((out: any) => {
+            row.job_outputs.forEach((out) => {
                 switch (out.type) {
-                    case 'resume_scan': outputs.analysis = out.content; break;
-                    case 'company_research': outputs.research = out.content; break;
-                    case 'cover_letter': outputs.coverLetter = out.content; break;
-                    case 'linkedin_message': outputs.linkedIn = out.content; break;
-                    case 'interview_prep': outputs.interviewPrep = out.content; break;
+                    case 'resume_scan': outputs.analysis = out.content as AnalysisResult; break;
+                    case 'company_research': outputs.research = out.content as ResearchResult; break;
+                    case 'cover_letter': outputs.coverLetter = out.content as CoverLetterState; break;
+                    case 'linkedin_message': outputs.linkedIn = out.content as LinkedInState; break;
+                    case 'interview_prep': outputs.interviewPrep = out.content as InterviewPrepState; break;
                 }
             });
         }
@@ -59,7 +79,7 @@ export const fetchJobs = async (): Promise<JobInfo[]> => {
             id: row.id,
             title: row.title,
             company: row.company,
-            description: row.description,
+            description: row.description ?? '',
             companyUrl: row.company_url || undefined,
             sourceUrl: row.source_url || undefined,
             contextName: row.context_name || undefined,
@@ -114,7 +134,7 @@ export const deleteJob = async (id: string) => {
 
 // --- Saving Outputs ---
 
-const saveOutput = async (jobId: string, type: OutputType, content: any) => {
+const saveOutput = async (jobId: string, type: OutputType, content: unknown) => {
     // Leverage the new unique index on (job_id, type) for atomic upserts
     // This replaces the previous delete-then-insert cycle, reducing DB roundtrips
     const { error } = await supabaseBrowser

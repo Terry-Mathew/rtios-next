@@ -12,7 +12,7 @@ export function RealtimeRefresher() {
       router.refresh();
     });
     return () => {
-      try { sub.unsubscribe(); } catch { }
+      try { sub.unsubscribe(); } catch { /* Unsubscribe may fail - safe to ignore */ }
     };
   }, [router]);
   return null;

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedAdmin } from '@/src/utils/supabase/server';
-import { rateLimit } from '@/src/utils/rate-limit';
+import { rateLimit } from '@/src/utils/rateLimit';
 
 // Strict rate limiter: 10 bans per minute
 const limiter = rateLimit(10);

@@ -24,7 +24,7 @@ async function checkAdminAccess() {
                         cookiesToSet.forEach(({ name, value, options }) =>
                             cookieStore.set(name, value, options)
                         );
-                    } catch { }
+                    } catch { /* Cookie setting may fail in SSR - safe to ignore */ }
                 },
             },
         }
@@ -55,7 +55,7 @@ async function getUsersWithUsage() {
                         cookiesToSet.forEach(({ name, value, options }) =>
                             cookieStore.set(name, value, options)
                         );
-                    } catch { }
+                    } catch { /* Cookie setting may fail in SSR - safe to ignore */ }
                 },
             },
         }

@@ -245,7 +245,7 @@ const LandingPage: React.FC = () => {
                     <h2 className="font-tiempos text-3xl font-bold text-center mb-16">The Edge. Realized.</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                         <div className="p-8 bg-surface-base border border-white/5 relative">
-                            <span className="absolute top-4 left-6 text-6xl font-serif text-white/5">"</span>
+                            <span className="absolute top-4 left-6 text-6xl font-serif text-white/5">&ldquo;</span>
                             <p className="font-tiempos text-lg leading-relaxed mb-6 relative z-10">
                                 I used to dread writing cover letters. This changed everything. It felt like I had an executive assistant drafting my story, perfectly aligned every time.
                             </p>
@@ -254,7 +254,7 @@ const LandingPage: React.FC = () => {
                             </div>
                         </div>
                         <div className="p-8 bg-surface-base border border-white/5 relative">
-                            <span className="absolute top-4 left-6 text-6xl font-serif text-white/5">"</span>
+                            <span className="absolute top-4 left-6 text-6xl font-serif text-white/5">&ldquo;</span>
                             <p className="font-tiempos text-lg leading-relaxed mb-6 relative z-10">
                                 The resume analysis surfaced gaps I never would have found. Landed interviews for roles I thought were out of reach.
                             </p>

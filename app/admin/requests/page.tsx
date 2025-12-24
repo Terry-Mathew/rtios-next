@@ -37,7 +37,7 @@ export default async function AdminRequestsPage({ searchParams }: { searchParams
         const payload = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
         actorId = payload?.sub ?? null;
       }
-    } catch { }
+    } catch { /* Cookie setting may fail in SSR - safe to ignore */ }
   }
   let isAdmin = false;
   if (actorId) {

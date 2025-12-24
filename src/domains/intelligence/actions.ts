@@ -138,7 +138,9 @@ export const researchCompany = async (companyName: string, companyUrl?: string):
     const cacheKey = generateCacheKey('companyResearch', { companyName: cleanCompanyName, companyUrl: cleanCompanyUrl || '' });
     const cached = aiCache.companyResearch.get(cacheKey);
     if (cached) {
-      console.log('[Cache Hit] Company research for:', cleanCompanyName);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Cache Hit] Company research for:', cleanCompanyName);
+      }
       return cached as ResearchResult;
     }
 

@@ -1,6 +1,6 @@
 'use server';
 
-import { getSupabaseServer, supabaseBrowser } from '@/src/services/supabase';
+import { getSupabaseServer } from '@/src/services/supabase';
 
 export type AccessRequestStatus = 'pending' | 'approved' | 'denied';
 export type AccessRole = 'beta_user' | 'beta_admin';
@@ -19,7 +19,8 @@ const ensureAdmin = async (userId: string) => {
 };
 
 export const submitAccessRequest = async (userId: string, requestedRole: AccessRole, reason?: string, permissions: Record<string, unknown> = {}) => {
-  const { data, error } = await supabaseBrowser
+  const client = getSupabaseServer();
+  const { data, error } = await client
     .from('beta_access_requests')
     .insert([{ user_id: userId, requested_role: requestedRole, reason, permissions }])
     .select()
@@ -29,7 +30,8 @@ export const submitAccessRequest = async (userId: string, requestedRole: AccessR
 };
 
 export const listMyAccessRequests = async (userId: string) => {
-  const { data, error } = await supabaseBrowser
+  const client = getSupabaseServer();
+  const { data, error } = await client
     .from('beta_access_requests')
     .select('*')
     .eq('user_id', userId)

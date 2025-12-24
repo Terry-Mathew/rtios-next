@@ -87,7 +87,7 @@ export const aiCache = {
 /**
  * Generate cache key from request parameters
  */
-export function generateCacheKey(operation: string, params: Record<string, any>): string {
+export function generateCacheKey(operation: string, params: Record<string, unknown>): string {
     // Sort keys for consistent hashing
     const sortedKeys = Object.keys(params).sort();
     const normalizedParams = sortedKeys.map(k => `${k}:${params[k]}`).join('|');

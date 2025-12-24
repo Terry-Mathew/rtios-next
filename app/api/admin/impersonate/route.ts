@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedAdmin } from '@/src/utils/supabase/server';
-import { rateLimit } from '@/src/utils/rate-limit';
+import { rateLimit } from '@/src/utils/rateLimit';
 
 // Strict rate limit for impersonation: 5 requests per minute per admin IP (or just per admin)
 const limiter = rateLimit(5);

@@ -1,133 +1,134 @@
 # Database Schema Documentation
 
-- Current Version: `20251222_init.sql`
-- Migration Files:
-  - `20251222_beta_access.down.sql`
-  - `20251222_beta_access.sql`
-  - `20251222_init.down.sql`
-  - `20251222_init.sql`
+**Last Updated:** December 24, 2025  
+**Current Migrations:**
+- `20251223_schema_redesign.sql` - Core schema
+- `20251223_fix_job_policies.sql`
+- `20251223_fix_permissions.sql`
+- `20251223_optimize_db.sql`
+- `20251223_restore_service.sql`
+- `20251224_admin_overhaul.sql` - Admin features & usage limits
+
+---
 
 ## Tables
 
-### public.beta_access_requests
-- Columns:
-  - `id` `uuid primary key default gen_random_uuid()` 
-  - `user_id` `uuid not null` 
-  - `requested_role` `text not null check (requested_role in (` 'beta_user','beta_admin'))
-  - `permissions` `jsonb default` '{}'::jsonb
-  - `reason` `text` 
-  - `status` `text not null check (status in (` 'pending','approved','denied')) default 'pending'
-  - `decided_by` `uuid` 
-  - `denial_reason` `text` 
-  - `created_at` `timestamptz not null default now()` 
-  - `decided_at` `timestamptz` 
+### public.users
+Synced from auth.users on signup.
 
-### public.beta_users
-- Columns:
-  - `id` `uuid primary key default gen_random_uuid()` 
-  - `user_id` `uuid not null unique` 
-  - `role` `text not null check (role in (` 'beta_user','beta_admin'))
-  - `permissions` `jsonb default` '{}'::jsonb
-  - `approved_at` `timestamptz not null default now()` 
-
-### public.audit_logs
-- Columns:
-  - `id` `uuid primary key default gen_random_uuid()` 
-  - `actor_user_id` `uuid not null` 
-  - `action` `text not null` 
-  - `entity_type` `text not null` 
-  - `entity_id` `uuid` 
-  - `metadata` `jsonb default` '{}'::jsonb
-  - `created_at` `timestamptz not null default now()` 
+| Column | Type | Default |
+|--------|------|---------|
+| `id` | uuid PRIMARY KEY | references auth.users(id) |
+| `email` | text NOT NULL | - |
+| `role` | user_role | 'user' |
+| `status` | text | 'active' |
+| `created_at` | timestamptz | now() |
 
 ### public.profiles
-- Columns:
-  - `id` `uuid primary key default gen_random_uuid()` 
-  - `user_id` `uuid not null unique` 
-  - `full_name` `text` 
-  - `email` `text` 
-  - `created_at` `timestamptz not null default now()` 
-  - `updated_at` `timestamptz not null default now()` 
+User settings and details.
 
-### public.jobs
-- Columns:
-  - `id` `uuid primary key default gen_random_uuid()` 
-  - `user_id` `uuid not null` 
-  - `title` `text not null` 
-  - `company` `text not null` 
-  - `description` `text` 
-  - `created_at` `timestamptz not null default now()` 
-  - `updated_at` `timestamptz not null default now()` 
+| Column | Type | Default |
+|--------|------|---------|
+| `id` | uuid PRIMARY KEY | references users(id) |
+| `full_name` | text | null |
+| `linkedin_url` | text | null |
+| `portfolio_url` | text | null |
+| `settings` | jsonb | '{}' |
+| `updated_at` | timestamptz | now() |
 
 ### public.resumes
-- Columns:
-  - `id` `uuid primary key default gen_random_uuid()` 
-  - `user_id` `uuid not null` 
-  - `title` `text` 
-  - `storage_path` `text` , -- storage bucket path
-  - `text_content` `text` 
-  - `created_at` `timestamptz not null default now()` 
-  - `updated_at` `timestamptz not null default now()` 
+Resume library.
 
-### public.job_applications
-- Columns:
-  - `id` `uuid primary key default gen_random_uuid()` 
-  - `user_id` `uuid not null` 
-  - `status` `text check (status in (` 'draft','applied','interview','offer','rejected')) default 'draft'
-  - `created_at` `timestamptz not null default now()` 
-  - `updated_at` `timestamptz not null default now()` 
-- Foreign Keys:
-  - `id` references `public.jobs`
-  - `id` references `public.resumes`
+| Column | Type | Default |
+|--------|------|---------|
+| `id` | uuid PRIMARY KEY | uuid_generate_v4() |
+| `user_id` | uuid NOT NULL | references users(id) |
+| `file_path` | text NOT NULL | - |
+| `file_name` | text NOT NULL | - |
+| `text_content` | text | null |
+| `metadata` | jsonb | '{}' |
+| `upload_date` | timestamptz | now() |
 
-## Indexes
-- `idx_beta_requests_user` on `public.beta_access_requests` (`user_id`)
-- `idx_beta_requests_status` on `public.beta_access_requests` (`status`)
-- `idx_beta_requests_status_created` on `public.beta_access_requests` (`status, created_at`)
-- `idx_beta_requests_status_created_inc` on `public.beta_access_requests` (`status, created_at`) include (`user_id, requested_role`)
-- `idx_beta_requests_denied_partial` on `public.beta_access_requests` (`created_at`) where status = 'denied'
-- `idx_beta_users_user` on `public.beta_users` (`user_id`)
-- `idx_audit_actor` on `public.audit_logs` (`actor_user_id`)
+### public.jobs
+Job application tracker.
 
-## RLS Policies
-- `beta_requests_insert` on `public.beta_access_requests` (for insert)
-  - with check: user_id = auth.uid(
-- `beta_requests_select_own` on `public.beta_access_requests` (for select)
-  - with check: user_id = auth.uid(
-- `jobs_owner_all` on `public.jobs` (for all)
-  - with check: user_id = auth.uid(
-- `resumes_owner_all` on `public.resumes` (for all)
-  - with check: user_id = auth.uid(
-- `applications_owner_all` on `public.job_applications` (for all)
-  - with check: user_id = auth.uid(
+| Column | Type | Default |
+|--------|------|---------|
+| `id` | uuid PRIMARY KEY | uuid_generate_v4() |
+| `user_id` | uuid NOT NULL | references users(id) |
+| `title` | text NOT NULL | - |
+| `company` | text NOT NULL | - |
+| `location` | text | null |
+| `description` | text | null |
+| `status` | job_status | 'saved' |
+| `company_url` | text | null |
+| `source_url` | text | null |
+| `context_name` | text | null |
+| `resume_id` | uuid | references resumes(id) |
+| `created_at` | timestamptz | now() |
+| `updated_at` | timestamptz | now() |
 
-## Triggers
-- `jobs_updated_at` BEFORE UPDATE on `public.jobs` executes `public.set_updated_at`
-- `resumes_updated_at` BEFORE UPDATE on `public.resumes` executes `public.set_updated_at`
-- `job_applications_updated_at` BEFORE UPDATE on `public.job_applications` executes `public.set_updated_at`
+### public.job_outputs
+AI-generated content storage.
 
-## Functions (Trigger Sources)
+| Column | Type | Default |
+|--------|------|---------|
+| `id` | uuid PRIMARY KEY | uuid_generate_v4() |
+| `job_id` | uuid NOT NULL | references jobs(id) |
+| `type` | analysis_type NOT NULL | - |
+| `content` | jsonb NOT NULL | - |
+| `version` | integer | 1 |
+| `generation_count` | integer | 1 |
+| `created_at` | timestamptz | now() |
 
-### public.set_updated_at
+---
+
+## Enums
 
 ```sql
-begin
-  new.updated_at = now();
-  return new;
-end
+CREATE TYPE user_role AS ENUM ('admin', 'user');
+CREATE TYPE job_status AS ENUM ('saved', 'applied', 'interviewing', 'offer', 'rejected');
+CREATE TYPE analysis_type AS ENUM ('resume_scan', 'company_research', 'cover_letter', 'linkedin_message', 'interview_prep');
 ```
 
-## Dependency Graph
-- Triggers → Functions → Tables
-  - Trigger `jobs_updated_at` → Function `public.set_updated_at` → Table `public.jobs`
-  - Trigger `resumes_updated_at` → Function `public.set_updated_at` → Table `public.resumes`
-  - Trigger `job_applications_updated_at` → Function `public.set_updated_at` → Table `public.job_applications`
+---
 
-## Execution Context
-- `jobs_updated_at`: executes BEFORE UPDATE per row on `public.jobs`
-- `resumes_updated_at`: executes BEFORE UPDATE per row on `public.resumes`
-- `job_applications_updated_at`: executes BEFORE UPDATE per row on `public.job_applications`
+## RLS Policies
 
-## Sample Audit Trails
-- Approvals/Denials recorded in `public.audit_logs` with action and metadata.
-- Policy enforcement: owner-only RLS ensures `user_id = auth.uid()` on CRUD operations.
+| Table | Policy | Rule |
+|-------|--------|------|
+| users | Users view own record | auth.uid() = id |
+| users | Admins view all users | get_user_role() = 'admin' |
+| users | Admins can update profiles | get_user_role() = 'admin' |
+| profiles | Users view/edit own profile | auth.uid() = id |
+| resumes | Users view/edit own resumes | auth.uid() = user_id |
+| jobs | Users view/edit own jobs | auth.uid() = user_id |
+| job_outputs | Users access own outputs | EXISTS (job with user_id = auth.uid()) |
+
+---
+
+## Key Functions
+
+### get_user_role()
+Returns the role of the authenticated user.
+
+### handle_new_user()
+Trigger function that creates user + profile on auth.users insert.
+
+### increment_job_output_generation(p_job_id, p_type)
+Atomically increments the generation_count for usage tracking.
+
+---
+
+## Storage Buckets
+
+- **resumes** (private): User uploads organized by `{user_id}/{timestamp}_{filename}`
+
+---
+
+## Usage Limits
+
+| Limit Type | Free Users | Admin |
+|------------|------------|-------|
+| Job Applications | 2 lifetime | Unlimited |
+| Feature Regenerations | 3 per job | Unlimited |

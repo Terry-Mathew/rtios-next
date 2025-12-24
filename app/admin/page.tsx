@@ -1,7 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { Users, Activity, Settings, Shield } from 'lucide-react';
 
 async function checkAdminAccess() {
@@ -17,7 +16,7 @@ async function checkAdminAccess() {
                         cookiesToSet.forEach(({ name, value, options }) =>
                             cookieStore.set(name, value, options)
                         );
-                    } catch { }
+                    } catch { /* Cookie setting may fail in SSR - safe to ignore */ }
                 },
             },
         }
@@ -48,7 +47,7 @@ async function getAdminStats() {
                         cookiesToSet.forEach(({ name, value, options }) =>
                             cookieStore.set(name, value, options)
                         );
-                    } catch { }
+                    } catch { /* Cookie setting may fail in SSR - safe to ignore */ }
                 },
             },
         }

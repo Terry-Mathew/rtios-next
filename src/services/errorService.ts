@@ -50,7 +50,8 @@ class ErrorService {
     // Extract user-friendly message
     const message = this.extractMessage(error);
 
-    // TODO: Send to external error tracking service (Sentry, LogRocket, etc.)
+    // NOTE: Integration point for external error tracking (e.g., Sentry, LogRocket)
+    // Uncomment and configure when setting up production monitoring:
     // if (process.env.NODE_ENV === 'production') {
     //   Sentry.captureException(error, {
     //     tags: { component: context.component, action: context.action },

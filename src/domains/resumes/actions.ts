@@ -13,7 +13,7 @@ export const getResumeSignedUrl = async (resumeId: string, expiresInSeconds: num
         const payload = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
         actorId = payload?.sub ?? null;
       }
-    } catch { }
+    } catch { /* JWT parsing may fail - silently continue with null actorId */ }
   }
   if (!actorId) throw new Error('Unauthorized');
   const client = getSupabaseServer();

@@ -123,3 +123,58 @@ if (typeof setInterval !== 'undefined') {
         }
     }, 10 * 60 * 1000);
 }
+
+// ============================================================================
+// Simple Rate Limiter Factory (for API Routes)
+// ============================================================================
+
+/**
+ * In-memory tracker for simple rate limiting
+ */
+const simpleTrackers = new Map<string, { count: number; expiresAt: number }>();
+
+interface SimpleRateLimitConfig {
+    interval: number; // Window size in milliseconds
+}
+
+/**
+ * Simple rate limiter factory for API routes
+ * Returns a limiter with a check() method
+ * 
+ * @param checkLimit - Maximum requests allowed in the window (default: 10)
+ * @param config - Configuration with interval in ms (default: 1 minute)
+ */
+export const rateLimit = (
+    checkLimit = 10,
+    config: SimpleRateLimitConfig = { interval: 60 * 1000 }
+) => {
+    return {
+        check: (token: string) => {
+            const now = Date.now();
+            const record = simpleTrackers.get(token);
+
+            // Cleanup expired
+            if (record && now > record.expiresAt) {
+                simpleTrackers.delete(token);
+            }
+
+            const currentRecord = simpleTrackers.get(token) || { count: 0, expiresAt: now + config.interval };
+
+            // Increment
+            currentRecord.count += 1;
+
+            // Save
+            simpleTrackers.set(token, currentRecord);
+
+            // Check
+            const isRateLimited = currentRecord.count > checkLimit;
+
+            return {
+                isRateLimited,
+                currentUsage: currentRecord.count,
+                limit: checkLimit,
+                remaining: Math.max(0, checkLimit - currentRecord.count)
+            };
+        },
+    };
+};

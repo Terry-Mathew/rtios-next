@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedAdmin } from '@/src/utils/supabase/server';
-import { rateLimit } from '@/src/utils/rate-limit';
+import { rateLimit } from '@/src/utils/rateLimit';
 
 // Moderate rate limit: 20 upgrades per minute
 const limiter = rateLimit(20);
