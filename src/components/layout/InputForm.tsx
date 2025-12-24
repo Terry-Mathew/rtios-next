@@ -44,7 +44,7 @@ const InputForm: React.FC<InputFormProps> = ({
     const addToast = useToastStore((state) => state.addToast);
 
     const [jobMode, setJobMode] = useState<JobMode>('library');
-    const [newJobMode, setNewJobMode] = useState<NewJobMode>('url');
+    const [newJobMode, setNewJobMode] = useState<NewJobMode>('manual');
 
     // New Job State
     const [newJobUrl, setNewJobUrl] = useState('');

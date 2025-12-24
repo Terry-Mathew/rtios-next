@@ -235,6 +235,8 @@ export const analyzeResume = async (
         Portfolio: ${isValidUrl(userLinks?.portfolio) ? userLinks?.portfolio : "N/A"}
         LinkedIn: ${isValidUrl(userLinks?.linkedin) ? userLinks?.linkedin : "N/A"}
         
+        INSTRUCTION: If valid Portfolio or LinkedIn URLs are provided above, use Google Search to visit and SCAN them to gather more context about the candidate's actual work history, skills, and projects. Use this external context to refine your recommendations.
+
         Return a JSON object with:
         - score (number 0-100)
         - missingKeywords (array of strings)
@@ -242,6 +244,7 @@ export const analyzeResume = async (
         - atsCompatibility (string, brief assessment)
       `,
       config: {
+        tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -318,6 +321,8 @@ export const generateCoverLetter = async (
       Portfolio: ${portfolioUrl}
       LinkedIn: ${linkedinUrl}
 
+      INSTRUCTION: Use Google Search to READ the candidate's Portfolio and LinkedIn (if valid URLs provided) to find specific, real-world examples of their work, projects, or posts to mention in the letter to increase credibility.
+
       STRATEGIC REQUIREMENTS:
       1. OPENING HOOK (Critical - 2-3 sentences):
          - Start with a specific, authentic connection to the company
@@ -380,6 +385,9 @@ export const generateCoverLetter = async (
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
+      config: {
+        tools: [{ googleSearch: {} }],
+      }
     });
 
     return response.text || "Failed to generate cover letter.";
@@ -551,6 +559,8 @@ export const generateInterviewQuestions = async (
       ${portfolioUrl ? `Portfolio: ${portfolioUrl}` : ''}
       ${linkedinUrl ? `LinkedIn: ${linkedinUrl}` : ''}
 
+      INSTRUCTION: Use Google Search to verify or deepen your understanding of the candidate's background from their links (Portfolio/LinkedIn). Use this to generate more specific and challenging questions.
+
       EXISTING QUESTIONS (do not repeat):
       ${existingQuestions.join("; ")}
 
@@ -600,6 +610,7 @@ export const generateInterviewQuestions = async (
       model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
+        tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.ARRAY,
