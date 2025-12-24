@@ -279,5 +279,7 @@ const LinkedInMessageGenerator: React.FC<LinkedInMessageGeneratorProps> = ({
 };
 
 // Memoize to prevent unnecessary re-renders
-export default React.memo(LinkedInMessageGenerator);
+const LinkedInMessageGeneratorMemo = React.memo(LinkedInMessageGenerator);
+LinkedInMessageGeneratorMemo.displayName = 'LinkedInMessageGenerator';
+export default LinkedInMessageGeneratorMemo;
 

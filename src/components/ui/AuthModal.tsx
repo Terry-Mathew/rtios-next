@@ -39,8 +39,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, initi
         if (err) throw err;
         onSuccess();
       }
-    } catch (e: any) {
-      setError(e?.message ?? 'Authentication failed');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Authentication failed');
     } finally {
       setLoading(false);
     }
@@ -73,7 +73,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, initi
               </div>
               <h2 className="font-tiempos text-2xl font-bold text-text-primary mb-3">Check Your Email</h2>
               <p className="font-interstate text-sm text-text-secondary mb-8 leading-relaxed">
-                We've sent a verification link to <span className="text-text-primary font-medium">{email}</span>.
+                We&rsquo;ve sent a verification link to <span className="text-text-primary font-medium">{email}</span>.
                 Please confirm your account to continue.
               </p>
               <button
@@ -107,8 +107,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, initi
                   try {
                     const { error: err } = await auth.signInWithOAuth('google');
                     if (err) throw err;
-                  } catch (e: any) {
-                    setError(e?.message ?? 'OAuth failed');
+                  } catch (e: unknown) {
+                    setError(e instanceof Error ? e.message : 'OAuth failed');
                   } finally {
                     setLoading(false);
                   }

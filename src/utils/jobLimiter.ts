@@ -84,7 +84,7 @@ export async function checkJobCreationLimit(): Promise<JobLimitResult> {
             allowed: false,
             totalUsed,
             totalAllowed,
-            message: `You've used all ${totalAllowed} free job applications. Upgrade for unlimited access!`,
+            message: `You have used all ${totalAllowed} free job applications. Upgrade for unlimited access!`,
             isAdmin: false
         };
     }

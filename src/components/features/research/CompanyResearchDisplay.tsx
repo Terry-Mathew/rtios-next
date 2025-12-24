@@ -11,26 +11,36 @@ const ALLOWED_ELEMENTS = [
 ];
 
 // Safe link renderer - only allows http/https protocols
+// URL validation is done before returning JSX to avoid errors in rendering
 const SafeLink: Components['a'] = ({ href, children }) => {
+  // Validate URL outside of JSX rendering
+  let validUrl: string | null = null;
   try {
     const url = new URL(href || '', window.location.origin);
-    if (!['http:', 'https:'].includes(url.protocol)) {
-      return <span>{children}</span>;
+    if (['http:', 'https:'].includes(url.protocol)) {
+      validUrl = url.toString();
     }
-    return (
-      <a
-        href={url.toString()}
-        target="_blank"
-        rel="noopener noreferrer nofollow"
-        className="text-accent hover:underline"
-      >
-        {children}
-      </a>
-    );
   } catch {
+    // Invalid URL - validUrl remains null
+  }
+
+  // Render JSX based on validation result (outside try/catch)
+  if (!validUrl) {
     return <span>{children}</span>;
   }
+
+  return (
+    <a
+      href={validUrl}
+      target="_blank"
+      rel="noopener noreferrer nofollow"
+      className="text-accent hover:underline"
+    >
+      {children}
+    </a>
+  );
 };
+SafeLink.displayName = 'SafeLink';
 
 interface CompanyResearchDisplayProps {
   research: ResearchResult | null;
@@ -100,5 +110,6 @@ const CompanyResearchDisplay: React.FC<CompanyResearchDisplayProps> = React.memo
     </div>
   );
 });
+CompanyResearchDisplay.displayName = 'CompanyResearchDisplay';
 
 export default CompanyResearchDisplay;

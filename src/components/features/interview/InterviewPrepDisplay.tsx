@@ -16,25 +16,32 @@ const ALLOWED_ELEMENTS = [
 ];
 
 const SafeLink: React.FC<{ href?: string; children?: React.ReactNode }> = ({ href, children }) => {
+    let validUrl: string | null = null;
     try {
         const url = new URL(href || '', typeof window !== 'undefined' ? window.location.origin : '');
-        if (!['http:', 'https:'].includes(url.protocol)) {
-            return <span>{children}</span>;
+        if (['http:', 'https:'].includes(url.protocol)) {
+            validUrl = url.toString();
         }
-        return (
-            <a
-                href={url.toString()}
-                target="_blank"
-                rel="noopener noreferrer nofollow"
-                className="text-accent hover:underline"
-            >
-                {children}
-            </a>
-        );
     } catch {
+        // Invalid URL
+    }
+
+    if (!validUrl) {
         return <span>{children}</span>;
     }
+
+    return (
+        <a
+            href={validUrl}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            className="text-accent hover:underline"
+        >
+            {children}
+        </a>
+    );
 };
+SafeLink.displayName = 'SafeLink';
 
 const InterviewQuestionCard: React.FC<{ question: InterviewQuestion; index: number }> = ({ question, index }) => {
     const [isExpanded, setIsExpanded] = React.useState(true);
@@ -235,10 +242,12 @@ const InterviewPrepDisplay: React.FC<InterviewPrepDisplayProps> = ({
 };
 
 // Memoize to prevent unnecessary re-renders
-export default React.memo(InterviewPrepDisplay, (prevProps, nextProps) => {
+const InterviewPrepDisplayMemo = React.memo(InterviewPrepDisplay, (prevProps, nextProps) => {
     return (
         prevProps.state.questions.length === nextProps.state.questions.length &&
         prevProps.state.isGenerating === nextProps.state.isGenerating &&
         prevProps.canGenerate === nextProps.canGenerate
     );
 });
+InterviewPrepDisplayMemo.displayName = 'InterviewPrepDisplay';
+export default InterviewPrepDisplayMemo;

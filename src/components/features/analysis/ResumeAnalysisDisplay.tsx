@@ -119,10 +119,12 @@ const ResumeAnalysisDisplay: React.FC<ResumeAnalysisDisplayProps> = ({ analysis 
 };
 
 // Memoize to prevent unnecessary re-renders
-export default React.memo(ResumeAnalysisDisplay, (prevProps, nextProps) => {
+const ResumeAnalysisDisplayMemo = React.memo(ResumeAnalysisDisplay, (prevProps, nextProps) => {
     // Re-render only if analysis actually changed
     return prevProps.analysis?.score === nextProps.analysis?.score &&
         prevProps.analysis?.atsCompatibility === nextProps.analysis?.atsCompatibility &&
         prevProps.analysis?.missingKeywords?.length === nextProps.analysis?.missingKeywords?.length &&
         prevProps.analysis?.recommendations?.length === nextProps.analysis?.recommendations?.length;
 });
+ResumeAnalysisDisplayMemo.displayName = 'ResumeAnalysisDisplay';
+export default ResumeAnalysisDisplayMemo;

@@ -159,10 +159,12 @@ const CoverLetterDisplay: React.FC<CoverLetterDisplayProps> = ({ state, onUpdate
 };
 
 // Memoize to prevent unnecessary re-renders when parent state changes
-export default React.memo(CoverLetterDisplay, (prevProps, nextProps) => {
+const CoverLetterDisplayMemo = React.memo(CoverLetterDisplay, (prevProps, nextProps) => {
     return (
         prevProps.state.content === nextProps.state.content &&
         prevProps.state.isGenerating === nextProps.state.isGenerating &&
         prevProps.state.tone === nextProps.state.tone
     );
 });
+CoverLetterDisplayMemo.displayName = 'CoverLetterDisplay';
+export default CoverLetterDisplayMemo;

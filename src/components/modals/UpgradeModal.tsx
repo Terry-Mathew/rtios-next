@@ -43,7 +43,7 @@ export default function UpgradeModal({
                 {isLifetimeLimit && (
                     <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-6">
                         <p className="text-sm text-red-400">
-                            <strong>Free trial complete.</strong> You've created {totalUsed} out of {totalAllowed} free job applications. Upgrade to continue!
+                            <strong>Free trial complete.</strong> You have created {totalUsed} out of {totalAllowed} free job applications. Upgrade to continue!
                         </p>
                     </div>
                 )}

@@ -1,0 +1,60 @@
+
+> my-app@0.1.0 lint
+> eslint
+
+
+E:\rtios-next\my-app\app\admin\users\BanUserButton.tsx
+  30:18  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\rtios-next\my-app\app\admin\users\DeleteUserButton.tsx
+  31:18  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\rtios-next\my-app\app\admin\users\page.tsx
+  4:28  warning  'Shield' is defined but never used     @typescript-eslint/no-unused-vars
+  4:36  warning  'RotateCcw' is defined but never used  @typescript-eslint/no-unused-vars
+  4:47  warning  'Eye' is defined but never used        @typescript-eslint/no-unused-vars
+
+E:\rtios-next\my-app\src\components\errors\FeatureErrorBoundary.tsx
+  18:30  warning  '_info' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\rtios-next\my-app\src\components\layout\InputForm.tsx
+    2:19  warning  'UserProfile' is defined but never used      @typescript-eslint/no-unused-vars
+    5:10  warning  'supabaseBrowser' is defined but never used  @typescript-eslint/no-unused-vars
+  125:18  warning  'e' is defined but never used                @typescript-eslint/no-unused-vars
+
+E:\rtios-next\my-app\src\components\layout\RightSidebar.tsx
+  7:28  warning  'UserProfile' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\rtios-next\my-app\src\components\ui\AuthModal.tsx
+  76:19  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+E:\rtios-next\my-app\src\domains\career\CareerContextProvider.tsx
+  127:8  warning  React Hook useEffect has missing dependencies: 'addToast' and 'resumes.length'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\rtios-next\my-app\src\domains\career\services\careerService.ts
+   52:35  error    Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+   61:15  warning  'current' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  104:19  warning  'storageData' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\rtios-next\my-app\src\domains\user\actions.ts
+  95:19  warning  'supabase' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\rtios-next\my-app\src\hooks\useJobManagement.ts
+   13:32  warning  'useState' is defined but never used                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+  202:8   warning  React Hook useCallback has unnecessary dependencies: 'setAnalysis', 'setResearch', 'setResumeText', 'setStatus', 'updateCoverLetter', 'updateInterviewPrep', and 'updateLinkedIn'. Either exclude them or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\rtios-next\my-app\src\hooks\useResumeManagement.ts
+  23:10  warning  'storage' is defined but never used                   @typescript-eslint/no-unused-vars
+  23:19  warning  'supabaseBrowser' is defined but never used           @typescript-eslint/no-unused-vars
+  49:20  warning  'legacyAddResume' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  63:24  warning  'setResumeText' is assigned a value but never used    @typescript-eslint/no-unused-vars
+
+E:\rtios-next\my-app\src\routes\AppView.tsx
+  82:24  warning  'setUserProfile' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\rtios-next\my-app\src\stores\jobStore.ts
+  90:25  warning  'activeJobId' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  90:38  warning  'jobs' is assigned a value but never used         @typescript-eslint/no-unused-vars
+
+✖ 25 problems (2 errors, 23 warnings)
+

@@ -10,6 +10,7 @@ import { immer } from 'zustand/middleware/immer';
 import { persist } from 'zustand/middleware';
 import type { JobInfo, JobOutputs } from '@/src/domains/jobs/types';
 import * as jobService from '@/src/domains/jobs/services/jobService';
+import { errorService } from '@/src/services/errorService';
 
 interface JobStoreState {
     jobs: JobInfo[];
@@ -53,7 +54,7 @@ export const useJobStore = create<JobStore>()(
                         state.isLoading = false;
                     });
                 } catch (error) {
-                    console.error('[JobStore] Fetch failed:', error);
+                    errorService.handleError(error, { component: 'JobStore', action: 'fetchJobs' });
                     set((state) => { state.isLoading = false; });
                 }
             },
@@ -72,10 +73,7 @@ export const useJobStore = create<JobStore>()(
                 try {
                     await jobService.saveJob(newJob);
                 } catch (error) {
-                    console.error('[JobStore] Add job failed:', {
-                        error,
-                        message: error instanceof Error ? error.message : 'Unknown error'
-                    });
+                    errorService.handleError(error, { component: 'JobStore', action: 'addJob', jobId: newJobId });
                     // Rollback optimistic update on failure
                     set((state) => {
                         state.jobs = state.jobs.filter(j => j.id !== newJobId);
@@ -99,7 +97,7 @@ export const useJobStore = create<JobStore>()(
                 try {
                     await jobService.deleteJob(id);
                 } catch (error) {
-                    console.error('[JobStore] Delete job failed:', error);
+                    errorService.handleError(error, { component: 'JobStore', action: 'deleteJob', jobId: id });
                     // Handle error/rollback
                 }
             },
@@ -126,11 +124,7 @@ export const useJobStore = create<JobStore>()(
                         if (outputs.interviewPrep) await jobService.saveInterviewPrep(jobId, outputs.interviewPrep);
                     }
                 } catch (error) {
-                    console.error('[JobStore] Update outputs failed:', {
-                        error,
-                        stringified: JSON.stringify(error, null, 2),
-                        message: error instanceof Error ? error.message : 'Unknown error'
-                    });
+                    errorService.handleError(error, { component: 'JobStore', action: 'updateJobOutputs', jobId });
                 }
             },
 

@@ -3,11 +3,6 @@
  * Prevents quota abuse by limiting requests per user per time window
  */
 
-interface RateLimitConfig {
-    maxRequests: number;
-    windowMs: number;
-}
-
 interface RateLimitEntry {
     count: number;
     resetTime: number;
@@ -131,7 +126,7 @@ if (typeof setInterval !== 'undefined') {
 /**
  * In-memory tracker for simple rate limiting
  */
-const simpleTrackers = new Map<string, { count: number; expiresAt: number }>();
+// simpleTrackers consolidated into rateLimitStore
 
 interface SimpleRateLimitConfig {
     interval: number; // Window size in milliseconds
@@ -151,29 +146,30 @@ export const rateLimit = (
     return {
         check: (token: string) => {
             const now = Date.now();
-            const record = simpleTrackers.get(token);
+            const key = `api:${token}`; // Namespace to avoid collision with feature limits
+            const entry = rateLimitStore.get(key);
 
             // Cleanup expired
-            if (record && now > record.expiresAt) {
-                simpleTrackers.delete(token);
+            if (entry && now > entry.resetTime) {
+                rateLimitStore.delete(key);
             }
 
-            const currentRecord = simpleTrackers.get(token) || { count: 0, expiresAt: now + config.interval };
+            const currentEntry = rateLimitStore.get(key) || { count: 0, resetTime: now + config.interval };
 
             // Increment
-            currentRecord.count += 1;
+            currentEntry.count += 1;
 
             // Save
-            simpleTrackers.set(token, currentRecord);
+            rateLimitStore.set(key, currentEntry);
 
             // Check
-            const isRateLimited = currentRecord.count > checkLimit;
+            const isRateLimited = currentEntry.count > checkLimit;
 
             return {
                 isRateLimited,
-                currentUsage: currentRecord.count,
+                currentUsage: currentEntry.count,
                 limit: checkLimit,
-                remaining: Math.max(0, checkLimit - currentRecord.count)
+                remaining: Math.max(0, checkLimit - currentEntry.count)
             };
         },
     };

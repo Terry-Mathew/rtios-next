@@ -37,6 +37,7 @@ const JobItem = React.memo(({ job, isActive, onSelect }: JobItemProps) => (
         )}
     </button>
 ));
+JobItem.displayName = 'JobItem';
 
 const ContextSwitcher: React.FC<ContextSwitcherProps> = ({
     jobs,

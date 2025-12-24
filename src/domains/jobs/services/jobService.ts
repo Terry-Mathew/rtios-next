@@ -2,6 +2,7 @@ import { supabaseBrowser } from '@/src/services/supabase';
 import type { JobInfo, JobOutputs } from '@/src/domains/jobs/types';
 import type { AnalysisResult, ResearchResult } from '@/src/domains/intelligence/types';
 import type { CoverLetterState, LinkedInState, InterviewPrepState } from '@/src/domains/workspace/types';
+import { errorService } from '@/src/services/errorService';
 
 // Enums mapping types in code to DB enums
 type OutputType = 'resume_scan' | 'company_research' | 'cover_letter' | 'linkedin_message' | 'interview_prep';
@@ -50,12 +51,7 @@ export const fetchJobs = async (): Promise<JobInfo[]> => {
         .order('created_at', { ascending: false });
 
     if (error) {
-        console.error('Error fetching jobs:', {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code
-        });
+        errorService.logError(error, { component: 'JobService', action: 'fetchJobs' });
         return [];
     }
 
@@ -117,7 +113,7 @@ export const saveJob = async (job: JobInfo): Promise<string> => {
         .single();
 
     if (error) {
-        console.error('Error saving job:', error);
+        errorService.logError(error, { component: 'JobService', action: 'saveJob', jobId: job.id });
         throw error;
     }
     return data.id;
@@ -145,12 +141,7 @@ const saveOutput = async (jobId: string, type: OutputType, content: unknown) => 
         );
 
     if (error) {
-        console.error(`Error upserting job output (${type}):`, {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code
-        });
+        errorService.logError(error, { component: 'JobService', action: `saveOutput:${type}`, jobId });
         throw error;
     }
 };
@@ -175,12 +166,7 @@ export const saveJobOutputsBulk = async (jobId: string, outputs: JobOutputs): Pr
         .upsert(upserts, { onConflict: 'job_id,type' });
 
     if (error) {
-        console.error('Error batch saving job outputs:', {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code
-        });
+        errorService.logError(error, { component: 'JobService', action: 'saveJobOutputsBulk', jobId });
         throw error;
     }
 };

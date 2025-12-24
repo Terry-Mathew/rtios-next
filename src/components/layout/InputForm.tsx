@@ -3,14 +3,13 @@ import { JobInfo, UserProfile, SavedResume, AppStatus } from '@/src/types';
 import { Briefcase, FileText, RefreshCw, FolderOpen, AlertCircle, Plus, Check, Trash2 } from 'lucide-react';
 import * as GeminiService from '@/src/domains/intelligence/actions';
 import { supabaseBrowser } from '@/src/services/supabase';
+import { useToastStore } from '@/src/stores/toastStore';
 
 interface InputFormProps {
     // Resume Props
+    // Resume Props
     resumes: SavedResume[];
     activeResumeId: string | null;
-    onAddResume: (file: File) => void;
-    onSelectResume: (id: string) => void;
-    onDeleteResume: (id: string) => void;
 
 
 
@@ -42,6 +41,7 @@ const InputForm: React.FC<InputFormProps> = ({
     onGenerate,
     appStatus,
 }) => {
+    const addToast = useToastStore((state) => state.addToast);
 
     const [jobMode, setJobMode] = useState<JobMode>('library');
     const [newJobMode, setNewJobMode] = useState<NewJobMode>('url');
@@ -329,7 +329,7 @@ const InputForm: React.FC<InputFormProps> = ({
                                     <div className="flex items-center justify-between mb-1">
                                         <label className="block text-xs font-medium text-text-secondary">Mission Parameters *</label>
                                         <button
-                                            onClick={() => {/* Mock load saved JD functionality */ alert("Load Saved JD clicked - Implementation would open a modal to select from past JDs") }}
+                                            onClick={() => addToast({ type: 'info', message: 'Feature coming soon: Load from Saved Parameters' })}
                                             className="text-xs text-accent hover:underline flex items-center gap-1"
                                         >
                                             <FolderOpen className="w-3 h-3" /> Load Saved Parameters
