@@ -218,10 +218,10 @@ const AppView: React.FC = () => {
                                     <div className="absolute inset-2 border-r-2 border-white/20 rounded-full animate-spin [animation-direction:reverse]"></div>
                                 </div>
                                 <div className="font-interstate text-xs font-bold text-accent uppercase tracking-[0.2em] animate-pulse">
-                                    {appState.status === AppStatus.PARSING_RESUME && "Ingesting Profile Data..."}
-                                    {appState.status === AppStatus.RESEARCHING && "Running Market Intelligence..."}
-                                    {appState.status === AppStatus.ANALYZING && "Calculating Fit Score..."}
-                                    {appState.status === AppStatus.GENERATING && "Synthesizing Draft..."}
+                                    {appState.status === AppStatus.PARSING_RESUME && "Ingesting Asset Data..."}
+                                    {appState.status === AppStatus.RESEARCHING && "Executing Market Recon..."}
+                                    {appState.status === AppStatus.ANALYZING && "Running Fit Diagnostics..."}
+                                    {appState.status === AppStatus.GENERATING && "Synthesizing Intelligence..."}
                                 </div>
                             </div>
                         </div>

@@ -24,9 +24,15 @@ const ResumeAnalysisDisplay: React.FC<ResumeAnalysisDisplayProps> = ({ analysis 
     return (
         <div className="h-full bg-surface-elevated overflow-y-auto p-6 space-y-10 custom-scrollbar">
 
+            {/* Header */}
+            <div className="border-b border-white/5 pb-2">
+                <h2 className="font-tiempos text-3xl font-bold text-text-primary">Fit Diagnostic</h2>
+                <p className="text-text-secondary text-sm mt-2 font-normal">Precise assessment of your asset alignment.</p>
+            </div>
+
             {/* Scoreboard Section */}
             <div className="flex flex-col items-center justify-center relative py-6 border-b border-white/5">
-                <h3 className="font-interstate text-xs font-bold text-text-secondary uppercase tracking-[0.2em] mb-6">Relevance Score</h3>
+                <h3 className="font-interstate text-xs font-bold text-text-secondary uppercase tracking-[0.2em] mb-6">Alignment Index</h3>
                 <div className="h-56 w-full relative">
                     <ResponsiveContainer width="100%" height="100%">
                         <RadialBarChart
@@ -73,7 +79,7 @@ const ResumeAnalysisDisplay: React.FC<ResumeAnalysisDisplayProps> = ({ analysis 
             <div>
                 <h4 className="flex items-center gap-2 font-interstate text-xs font-bold text-text-primary uppercase tracking-widest mb-4">
                     <Search className="w-4 h-4 text-text-secondary" />
-                    Missing Keywords
+                    Keyword Gaps
                 </h4>
                 {analysis.missingKeywords.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
@@ -94,7 +100,7 @@ const ResumeAnalysisDisplay: React.FC<ResumeAnalysisDisplayProps> = ({ analysis 
             <div>
                 <h4 className="flex items-center gap-2 font-interstate text-xs font-bold text-text-primary uppercase tracking-widest mb-4">
                     <TrendingUp className="w-4 h-4 text-text-secondary" />
-                    Strategic Adjustments
+                    Optimization Strategy
                 </h4>
                 <ul className="space-y-4">
                     {analysis.recommendations.map((rec, idx) => (
@@ -116,7 +122,7 @@ const ResumeAnalysisDisplay: React.FC<ResumeAnalysisDisplayProps> = ({ analysis 
 export default React.memo(ResumeAnalysisDisplay, (prevProps, nextProps) => {
     // Re-render only if analysis actually changed
     return prevProps.analysis?.score === nextProps.analysis?.score &&
-           prevProps.analysis?.atsCompatibility === nextProps.analysis?.atsCompatibility &&
-           prevProps.analysis?.missingKeywords?.length === nextProps.analysis?.missingKeywords?.length &&
-           prevProps.analysis?.recommendations?.length === nextProps.analysis?.recommendations?.length;
+        prevProps.analysis?.atsCompatibility === nextProps.analysis?.atsCompatibility &&
+        prevProps.analysis?.missingKeywords?.length === nextProps.analysis?.missingKeywords?.length &&
+        prevProps.analysis?.recommendations?.length === nextProps.analysis?.recommendations?.length;
 });

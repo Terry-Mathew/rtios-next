@@ -83,7 +83,7 @@ const DashboardView: React.FC = () => {
                                 <rect x="14" y="14" width="7" height="7"></rect>
                                 <rect x="3" y="14" width="7" height="7"></rect>
                             </svg>
-                            <span className="text-[9px] font-interstate uppercase font-bold text-center">Dashboard</span>
+                            <span className="text-[9px] font-interstate uppercase font-bold text-center">Command</span>
                         </button>
 
                         {/* Divider */}
@@ -101,7 +101,7 @@ const DashboardView: React.FC = () => {
                                 <line x1="16" y1="17" x2="8" y2="17"></line>
                                 <polyline points="10 9 9 9 8 9"></polyline>
                             </svg>
-                            <span className="text-[9px] font-interstate uppercase font-bold">Cover</span>
+                            <span className="text-[9px] font-interstate uppercase font-bold">Pitch</span>
                         </button>
 
                         {/* LinkedIn Button */}
@@ -112,7 +112,7 @@ const DashboardView: React.FC = () => {
                             <svg className="w-5 h-5 text-text-secondary group-hover:text-text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                             </svg>
-                            <span className="text-[9px] font-interstate uppercase font-bold">Social</span>
+                            <span className="text-[9px] font-interstate uppercase font-bold">Signal</span>
                         </button>
 
                         {/* Interview Prep Button */}
@@ -124,7 +124,7 @@ const DashboardView: React.FC = () => {
                                 <path d="M12 2a10 10 0 1 0 10 10H12V2z"></path>
                                 <path d="M12 12h10a10 10 0 0 1-10 10V12z"></path>
                             </svg>
-                            <span className="text-[9px] font-interstate uppercase font-bold">Prep</span>
+                            <span className="text-[9px] font-interstate uppercase font-bold">War Room</span>
                         </button>
                     </div>
                 </nav>

@@ -155,16 +155,16 @@ const InterviewPrepDisplay: React.FC<InterviewPrepDisplayProps> = ({
                             <Brain className="w-5 h-5 text-accent" />
                         </div>
                         <span className="font-interstate text-xs font-bold text-accent uppercase tracking-[0.2em]">
-                            Interview Intelligence
+                            Mission Preparation
                         </span>
                     </div>
                     <h2 className="font-tiempos text-3xl md:text-4xl font-bold text-text-primary">
-                        Interview Prep
+                        The War Room
                     </h2>
-                    <p className="text-text-secondary mt-2 font-light max-w-xl text-sm">
-                        Targeted preparation for <span className="text-white font-medium border-b border-white/20 pb-0.5">{jobInfo.title || 'your target role'}</span>.
+                    <p className="text-text-secondary mt-3 font-normal max-w-xl text-sm">
+                        High-intensity preparation for <span className="text-white font-medium border-b border-white/20 pb-0.5">{jobInfo.title || 'your target role'}</span>.
                         <br />
-                        <span className="opacity-70 text-xs mt-1 block">Scannable. Structured. Interview-Ready.</span>
+                        <span className="text-text-secondary text-sm font-medium mt-2 block">Simulate scenarios. Refine your strategy. Win the offer.</span>
                     </p>
                 </div>
 
@@ -172,7 +172,7 @@ const InterviewPrepDisplay: React.FC<InterviewPrepDisplayProps> = ({
                 {questions.length > 0 && (
                     <div className="hidden md:block">
                         <span className="font-interstate text-xs text-text-secondary">
-                            {questions.length} Questions Generated
+                            {questions.length} Scenarios Generated
                         </span>
                     </div>
                 )}
@@ -187,9 +187,9 @@ const InterviewPrepDisplay: React.FC<InterviewPrepDisplayProps> = ({
                             <Brain className="w-8 h-8 text-text-secondary opacity-50" />
                         </div>
                         <div>
-                            <h3 className="font-tiempos text-2xl text-text-primary mb-2">Initialize Briefing</h3>
+                            <h3 className="font-tiempos text-2xl text-text-primary mb-2">Initialize War Room</h3>
                             <p className="font-interstate text-sm text-text-secondary max-w-sm mx-auto leading-relaxed">
-                                Generate a high-signal question set tailored to uncover gaps and highlight strengths.
+                                Generate a high-signal simulation tailored to uncover gaps and highlight strengths.
                             </p>
                         </div>
                         <button
@@ -198,7 +198,7 @@ const InterviewPrepDisplay: React.FC<InterviewPrepDisplayProps> = ({
                             className="group relative px-8 py-3 bg-accent text-surface-base font-interstate font-bold text-sm tracking-wide hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
                         >
                             <span className="relative z-10 flex items-center gap-2">
-                                GENERATE BRIEFING <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                DEPLOY WAR ROOM <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </span>
                         </button>
                     </div>

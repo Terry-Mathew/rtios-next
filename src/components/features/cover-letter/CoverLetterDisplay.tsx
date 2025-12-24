@@ -57,6 +57,28 @@ const CoverLetterDisplay: React.FC<CoverLetterDisplayProps> = ({ state, onUpdate
     return (
         <div className="flex flex-col h-full bg-surface-base relative overflow-hidden font-sans">
 
+            {/* Header */}
+            <div className="bg-surface-base p-6 border-b border-white/10 shrink-0 z-10">
+                <div className="flex items-center gap-3 mb-2">
+                    <div className="bg-accent/10 p-1.5 rounded">
+                        <PenTool className="w-4 h-4 text-accent" />
+                    </div>
+                    <span className="font-interstate text-xs font-bold text-accent uppercase tracking-[0.2em]">
+                        Format: Cover Letter
+                    </span>
+                </div>
+                <div className="flex items-end justify-between">
+                    <div>
+                        <h2 className="font-tiempos text-3xl font-bold text-text-primary">
+                            Strategic Narrative
+                        </h2>
+                        <p className="text-text-secondary mt-2 text-sm font-normal">
+                            High-impact cover letter connecting your assets to their needs.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             {/* Editorial Toolbar */}
             <div className="p-6 border-b border-white/10 flex flex-wrap items-center justify-between gap-4 z-10 bg-surface-base">
 

@@ -170,7 +170,7 @@ const ProfileCard: React.FC<{ userProfile: UserProfile; onUpdateProfile: (p: Use
             )}
 
             {!isEditing && (
-                <p className="font-interstate text-[9px] text-text-secondary mt-auto pt-3 border-t border-white/5 opacity-60">
+                <p className="font-interstate text-xs text-text-secondary mt-auto pt-3 border-t border-white/5 opacity-60">
                     Identity locked. Click edit to update.
                 </p>
             )}
@@ -212,8 +212,8 @@ const Dashboard: React.FC<DashboardProps> = ({
 
             {/* Dashboard Header */}
             <div className="p-8 border-b border-white/5 bg-surface-base">
-                <h1 className="font-tiempos text-3xl font-bold text-text-primary mb-2">Executive Dashboard</h1>
-                <p className="font-interstate text-sm text-text-secondary">Manage your career context and active applications.</p>
+                <h1 className="font-tiempos text-3xl font-bold text-text-primary mb-2">Command Center</h1>
+                <p className="font-interstate text-sm text-text-secondary">Manage your active operative data and mission statuses.</p>
             </div>
 
             {/* Scrollable Content */}
@@ -225,10 +225,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                         <div>
                             <h2 className="font-tiempos text-xl font-bold text-text-primary flex items-center gap-2">
                                 <Briefcase className="w-5 h-5 text-accent" />
-                                Career Context
+                                Operative Profile
                             </h2>
                             <p className="font-interstate text-xs text-text-secondary mt-1">
-                                Your source of truth. These artifacts power all generated applications.
+                                Your central dossier. These assets power all mission outputs.
                             </p>
                         </div>
                     </div>
@@ -315,17 +315,17 @@ const Dashboard: React.FC<DashboardProps> = ({
                     <div className="mb-6">
                         <h2 className="font-tiempos text-xl font-bold text-text-primary flex items-center gap-2">
                             <ArrowRight className="w-5 h-5 text-accent" />
-                            Job Applications
+                            Mission Logs
                         </h2>
                         <p className="font-interstate text-xs text-text-secondary mt-1">
-                            History of role-specific strategies and generated content.
+                            Registry of active and archived mission data.
                         </p>
                     </div>
 
                     <div className="rounded-lg border border-white/10 overflow-hidden bg-surface-elevated">
                         {/* Table Header */}
-                        <div className="grid grid-cols-12 gap-4 p-4 border-b border-white/10 bg-white/5 font-interstate text-[10px] font-bold text-text-secondary uppercase tracking-widest">
-                            <div className="col-span-5 md:col-span-5">Application Name</div>
+                        <div className="grid grid-cols-12 gap-4 p-4 border-b border-white/10 bg-white/5 font-interstate text-xs font-bold text-text-secondary uppercase tracking-widest">
+                            <div className="col-span-5 md:col-span-5">Mission Name</div>
                             <div className="col-span-4 md:col-span-4">Target Role</div>
                             <div className="col-span-3 md:col-span-3 text-right">Actions</div>
                         </div>
@@ -334,7 +334,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                         {jobs.length === 0 ? (
                             <div className="p-12 text-center flex flex-col items-center justify-center opacity-50">
                                 <Briefcase className="w-8 h-8 mb-3 text-text-secondary" />
-                                <p className="font-interstate text-sm text-text-secondary">No applications started.</p>
+                                <p className="font-interstate text-sm text-text-secondary">No missions initialized.</p>
                             </div>
                         ) : (
                             jobs.map((job) => (
@@ -350,11 +350,11 @@ const Dashboard: React.FC<DashboardProps> = ({
                                     ${activeJobId === job.id ? 'bg-accent/5' : ''}`}
                                 >
                                     <div className="col-span-5 md:col-span-5">
-                                        <div className={`font-tiempos text-sm font-bold truncate pr-4 ${activeJobId === job.id ? 'text-accent' : 'text-text-primary'}`}>
-                                            {job.contextName || 'Untitled Application'}
+                                        <div className={`font-tiempos text-base font-bold truncate pr-4 ${activeJobId === job.id ? 'text-accent' : 'text-text-primary'}`}>
+                                            {job.contextName || 'Untitled Mission'}
                                         </div>
-                                        <div className="font-interstate text-[10px] text-text-secondary mt-0.5">
-                                            Last Updated: {job.dateAdded ? new Date(job.dateAdded).toLocaleDateString() : '—'}
+                                        <div className="font-interstate text-xs text-text-secondary mt-0.5">
+                                            Last Signal: {job.dateAdded ? new Date(job.dateAdded).toLocaleDateString() : '—'}
                                         </div>
                                     </div>
 

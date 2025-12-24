@@ -138,13 +138,13 @@ const InputForm: React.FC<InputFormProps> = ({
 
 
             {/* === APPLICATIONS (JOBS) === */}
-            <div className="space-y-6 animate-fade-in-up">
+            <div className="space-y-6 animate-fade-in-up p-6">
                 {jobMode === 'library' ? (
                     <>
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="font-tiempos text-lg font-bold text-text-primary mb-1">Applications</h3>
-                                <p className="font-interstate text-xs text-text-secondary">Select an application to work on.</p>
+                                <h3 className="font-tiempos text-lg font-bold text-text-primary mb-1">Mission Objectives</h3>
+                                <p className="font-interstate text-xs text-text-secondary">Select a target objective to work on.</p>
                             </div>
                             <button
                                 onClick={() => setJobMode('new')}
@@ -174,7 +174,7 @@ const InputForm: React.FC<InputFormProps> = ({
                                         </div>
                                     </div>
                                     {activeJobId === job.id && (
-                                        <div className="absolute top-4 right-4 text-accent text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
+                                        <div className="absolute top-4 right-4 text-accent text-xs font-bold uppercase tracking-widest flex items-center gap-1">
                                             Active <Check className="w-3 h-3" />
                                         </div>
                                     )}
@@ -189,8 +189,8 @@ const InputForm: React.FC<InputFormProps> = ({
                             {jobs.length === 0 && (
                                 <div className="text-center p-8 border border-white/5 rounded bg-surface-base/50 flex flex-col items-center gap-3">
                                     <Briefcase className="w-8 h-8 text-text-secondary opacity-30" />
-                                    <p className="text-xs text-text-secondary">No active applications.</p>
-                                    <button onClick={() => setJobMode('new')} className="text-xs text-accent hover:underline">Create Application</button>
+                                    <p className="text-xs text-text-secondary">No active missions.</p>
+                                    <button onClick={() => setJobMode('new')} className="text-xs text-accent hover:underline">Create Mission</button>
                                 </div>
                             )}
                         </div>
@@ -201,21 +201,21 @@ const InputForm: React.FC<InputFormProps> = ({
                         <div className="flex items-center gap-2 mb-6">
                             <button onClick={() => setJobMode('library')} className="text-xs text-text-secondary hover:text-white">Cancel</button>
                             <div className="h-4 w-px bg-white/10"></div>
-                            <h3 className="font-tiempos text-lg font-bold text-text-primary">Step 2: Define Application</h3>
+                            <h3 className="font-tiempos text-lg font-bold text-text-primary">Step 2: Define Mission</h3>
                         </div>
 
                         {/* Mode Toggle */}
                         <div className="flex bg-surface-base p-1 rounded border border-white/10 mb-6">
                             <button
                                 onClick={() => setNewJobMode('url')}
-                                className={`flex-1 py-1.5 text-[10px] font-interstate font-bold uppercase tracking-widest rounded transition-all
+                                className={`flex-1 py-1.5 text-xs font-interstate font-bold uppercase tracking-widest rounded transition-all
                                     ${newJobMode === 'url' ? 'bg-white/10 text-white' : 'text-text-secondary hover:text-white'}`}
                             >
                                 Auto-Extract Link
                             </button>
                             <button
                                 onClick={() => setNewJobMode('manual')}
-                                className={`flex-1 py-1.5 text-[10px] font-interstate font-bold uppercase tracking-widest rounded transition-all
+                                className={`flex-1 py-1.5 text-xs font-interstate font-bold uppercase tracking-widest rounded transition-all
                                     ${newJobMode === 'manual' ? 'bg-white/10 text-white' : 'text-text-secondary hover:text-white'}`}
                             >
                                 Manual Entry
@@ -225,7 +225,7 @@ const InputForm: React.FC<InputFormProps> = ({
                         {newJobMode === 'url' ? (
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-medium text-text-secondary mb-1">Job Posting URL</label>
+                                    <label className="block text-xs font-medium text-text-secondary mb-1">Target Description URL</label>
                                     <div className="flex gap-2">
                                         <input
                                             type="url"
@@ -256,11 +256,11 @@ const InputForm: React.FC<InputFormProps> = ({
                                                 <div className="w-3 h-3 bg-accent rounded-full relative shadow-[0_0_10px_rgba(0,255,127,0.5)]"></div>
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] font-interstate font-bold text-accent uppercase tracking-widest">
+                                                <span className="text-xs font-interstate font-bold text-accent uppercase tracking-widest">
                                                     Intelligence Active
                                                 </span>
-                                                <span className="text-[10px] text-text-secondary">
-                                                    Analyzing page structure...
+                                                <span className="text-xs text-text-secondary">
+                                                    Analyzing target parameters...
                                                 </span>
                                             </div>
                                         </div>
@@ -273,9 +273,9 @@ const InputForm: React.FC<InputFormProps> = ({
                                         </div>
                                     )}
                                     <div className="mt-4 p-4 bg-surface-base border border-white/5 rounded">
-                                        <p className="text-[10px] text-text-secondary leading-relaxed">
+                                        <p className="text-xs text-text-secondary leading-relaxed">
                                             <FileText className="w-3 h-3 inline mr-1" />
-                                            AI will attempt to read the job title, company, and description directly from the page.
+                                            AI will attempt to read the role, company, and parameters directly from the page.
                                         </p>
                                     </div>
                                 </div>
@@ -284,7 +284,7 @@ const InputForm: React.FC<InputFormProps> = ({
                             <div className="space-y-4">
                                 {/* Context Name Input (Required per PRD) */}
                                 <div>
-                                    <label className="block text-xs font-medium text-text-secondary mb-1 font-interstate">Application Name *</label>
+                                    <label className="block text-xs font-medium text-text-secondary mb-1 font-interstate">Mission Name *</label>
                                     <input
                                         type="text"
                                         value={newJobData.contextName || ''}
@@ -292,12 +292,12 @@ const InputForm: React.FC<InputFormProps> = ({
                                         placeholder="e.g. Senior PM - Google"
                                         className="w-full bg-surface-base border border-white/10 rounded px-3 py-2 text-sm text-text-primary focus:border-accent outline-none placeholder:text-white/20"
                                     />
-                                    <p className="text-[9px] text-text-secondary mt-1">This creates the file name for your saved application.</p>
+                                    <p className="text-xs text-text-secondary mt-1">This creates the file name for your saved mission.</p>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-medium text-text-secondary mb-1">Job Title *</label>
+                                        <label className="block text-xs font-medium text-text-secondary mb-1">Target Role *</label>
                                         <input
                                             type="text"
                                             value={newJobData.title}
@@ -306,7 +306,7 @@ const InputForm: React.FC<InputFormProps> = ({
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-text-secondary mb-1">Company *</label>
+                                        <label className="block text-xs font-medium text-text-secondary mb-1">Target Entity *</label>
                                         <input
                                             type="text"
                                             value={newJobData.company}
@@ -317,7 +317,7 @@ const InputForm: React.FC<InputFormProps> = ({
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-medium text-text-secondary mb-1">Company URL</label>
+                                    <label className="block text-xs font-medium text-text-secondary mb-1">Target URL</label>
                                     <input
                                         type="url"
                                         value={newJobData.companyUrl}
@@ -327,12 +327,12 @@ const InputForm: React.FC<InputFormProps> = ({
                                 </div>
                                 <div>
                                     <div className="flex items-center justify-between mb-1">
-                                        <label className="block text-xs font-medium text-text-secondary">Job Description *</label>
+                                        <label className="block text-xs font-medium text-text-secondary">Mission Parameters *</label>
                                         <button
                                             onClick={() => {/* Mock load saved JD functionality */ alert("Load Saved JD clicked - Implementation would open a modal to select from past JDs") }}
-                                            className="text-[10px] text-accent hover:underline flex items-center gap-1"
+                                            className="text-xs text-accent hover:underline flex items-center gap-1"
                                         >
-                                            <FolderOpen className="w-3 h-3" /> Load Saved JD
+                                            <FolderOpen className="w-3 h-3" /> Load Saved Parameters
                                         </button>
                                     </div>
                                     <textarea
@@ -347,7 +347,7 @@ const InputForm: React.FC<InputFormProps> = ({
                                     disabled={!newJobData.title || !newJobData.company || !newJobData.description || !newJobData.contextName || isSavingJob}
                                     className="w-full py-3 bg-accent text-surface-base font-interstate font-bold text-xs uppercase tracking-widest rounded hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {isSavingJob ? 'Saving Application...' : 'Next: Save Context'}
+                                    {isSavingJob ? 'Initializing Mission...' : 'Confirm Mission'}
                                 </button>
                             </div>
                         )}
@@ -366,11 +366,11 @@ const InputForm: React.FC<InputFormProps> = ({
                             : 'bg-accent text-surface-base hover:bg-white shadow-[0_0_15px_rgba(0,255,127,0.3)]'
                         }`}
                 >
-                    {isGenerating ? 'Processing Intelligence...' : 'Run Intelligence'}
+                    {isGenerating ? 'Initializing Recon...' : 'EXECUTE ANALYSIS'}
                 </button>
                 {(!currentResume || !activeJobId) && !isGenerating && (
-                    <p className="text-center mt-2 text-[10px] text-alert-gap font-interstate uppercase tracking-widest">
-                        {!currentResume ? 'Resume Required (Check Dashboard)' : 'Select an Application'}
+                    <p className="text-center mt-2 text-xs text-alert-gap font-interstate uppercase tracking-widest">
+                        {!currentResume ? 'Operative Profile Required' : 'Select Mission Objective'}
                     </p>
                 )}
             </div>

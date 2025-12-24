@@ -93,34 +93,33 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                 </button>
 
 
-                {/* Sidebar Tabs */}
                 <div className="flex items-center border-b border-white/5">
                     <button
                         onClick={() => setActiveSidebarTab('input')}
-                        className={`flex-1 py-4 text-xs font-interstate font-bold uppercase tracking-widest transition-colors
+                        className={`flex-1 py-4 text-xs font-interstate font-bold uppercase tracking-widest transition-colors text-center flex justify-center
             ${activeSidebarTab === 'input'
                                 ? 'text-text-primary border-b border-accent bg-white/5'
                                 : 'text-text-secondary hover:text-text-primary hover:bg-white/5'}`}
                     >
-                        Workspace
+                        Mission Control
                     </button>
                     <button
                         onClick={() => setActiveSidebarTab('analysis')}
-                        className={`flex-1 py-4 text-xs font-interstate font-bold uppercase tracking-widest transition-colors
+                        className={`flex-1 py-4 text-xs font-interstate font-bold uppercase tracking-widest transition-colors text-center flex justify-center
             ${activeSidebarTab === 'analysis'
                                 ? 'text-text-primary border-b border-accent bg-white/5'
                                 : 'text-text-secondary hover:text-text-primary hover:bg-white/5'}`}
                     >
-                        Analysis
+                        Fit Diagnostic
                     </button>
                     <button
                         onClick={() => setActiveSidebarTab('research')}
-                        className={`flex-1 py-4 text-xs font-interstate font-bold uppercase tracking-widest transition-colors
+                        className={`flex-1 py-4 text-xs font-interstate font-bold uppercase tracking-widest transition-colors text-center flex justify-center
             ${activeSidebarTab === 'research'
                                 ? 'text-text-primary border-b border-accent bg-white/5'
                                 : 'text-text-secondary hover:text-text-primary hover:bg-white/5'}`}
                     >
-                        Intel
+                        Recon Dossier
                     </button>
                 </div>
 

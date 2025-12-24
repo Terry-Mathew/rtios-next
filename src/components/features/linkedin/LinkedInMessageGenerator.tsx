@@ -47,16 +47,22 @@ const LinkedInMessageGenerator: React.FC<LinkedInMessageGeneratorProps> = ({
       {/* Input Panel */}
       <div className="w-full md:w-[400px] bg-surface-elevated border-r border-white/5 p-8 flex flex-col overflow-y-auto custom-scrollbar shrink-0">
 
-        <div className="flex items-center gap-3 mb-8">
-          <div className="p-2 bg-accent/10 rounded">
-            <MessageSquare className="w-5 h-5 text-accent" />
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-accent/10 rounded">
+              <MessageSquare className="w-5 h-5 text-accent" />
+            </div>
+            <span className="font-interstate text-[10px] font-bold text-accent uppercase tracking-widest">
+              Signal Protocol
+            </span>
           </div>
-          <h2 className="font-tiempos text-xl font-bold text-text-primary">Outreach Config</h2>
+          <h2 className="font-tiempos text-3xl font-bold text-text-primary">Network Signal</h2>
+          <p className="text-text-secondary text-sm mt-3 font-normal">Deploy precision outreach to high-value targets.</p>
         </div>
 
         {/* 1. Target Audience - Radio Style */}
         <div className="mb-6">
-          <label className="block text-[10px] font-interstate font-bold text-text-secondary uppercase tracking-widest mb-3">Target Audience</label>
+          <label className="block text-[10px] font-interstate font-bold text-text-secondary uppercase tracking-widest mb-3">Target Sector</label>
           <div className="flex gap-2">
             {['NEW CONNECTION', 'RE-ENGAGE'].map((audience) => (
               <button
@@ -150,7 +156,7 @@ const LinkedInMessageGenerator: React.FC<LinkedInMessageGeneratorProps> = ({
             onClick={() => setShowAdvanced(!showAdvanced)}
             className="flex items-center justify-between w-full py-3 text-[10px] font-interstate font-bold text-text-secondary uppercase tracking-widest hover:text-text-primary transition-colors"
           >
-            <span>Advanced Options</span>
+            <span>Advanced Protocols</span>
             <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${showAdvanced ? 'rotate-180' : ''}`} />
           </button>
 
@@ -213,14 +219,14 @@ const LinkedInMessageGenerator: React.FC<LinkedInMessageGeneratorProps> = ({
           {isGenerating ? (
             <>
               <RefreshCw className="w-3 h-3 animate-spin" />
-              Drafting Strategy...
+              Transmitting Signal...
             </>
           ) : !canGenerate ? (
             "Complete Configuration"
           ) : (
             <>
               <Send className="w-3 h-3" />
-              Generate Draft
+              TRANSMIT SIGNAL
             </>
           )}
         </button>
@@ -231,7 +237,7 @@ const LinkedInMessageGenerator: React.FC<LinkedInMessageGeneratorProps> = ({
         <div className="p-6 border-b border-white/10 flex justify-between items-center bg-surface-base">
           <div className="flex items-center gap-2 text-xs font-interstate text-text-secondary">
             <span className="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
-            AI DRAFTING CANVAS
+            SIGNAL COMPOSITION
           </div>
           {generatedMessage && (
             <button

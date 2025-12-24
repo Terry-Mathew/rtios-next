@@ -53,9 +53,9 @@ const CompanyResearchDisplay: React.FC<CompanyResearchDisplayProps> = React.memo
           <Building2 className="w-5 h-5 text-text-primary" />
         </div>
         <div>
-          <h3 className="font-tiempos text-lg font-bold text-text-primary">Corporate Profile</h3>
+          <h3 className="font-tiempos text-lg font-bold text-text-primary">Reconnaissance Dossier</h3>
           <p className="font-interstate text-[10px] text-text-secondary uppercase tracking-widest">
-            Latest Intelligence
+            Deep-Dive Target Intelligence
           </p>
         </div>
       </div>
