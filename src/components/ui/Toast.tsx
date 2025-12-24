@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, memo } from 'react';
 import { AlertCircle, CheckCircle2, Info, X, AlertTriangle } from 'lucide-react';
 import { ToastData } from '@/src/stores/toastStore';
 
@@ -22,7 +22,8 @@ const styles = {
     info: 'border-l-4 border-blue-500 bg-white dark:bg-gray-800',
 };
 
-export const Toast: React.FC<ToastProps> = ({ id, type, message, onDismiss }) => {
+// Bolt: Memoized to prevent unnecessary re-renders when other toasts change
+export const Toast = memo(({ id, type, message, onDismiss }: ToastProps) => {
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
@@ -61,4 +62,6 @@ export const Toast: React.FC<ToastProps> = ({ id, type, message, onDismiss }) =>
             </button>
         </div>
     );
-};
+});
+
+Toast.displayName = 'Toast';
