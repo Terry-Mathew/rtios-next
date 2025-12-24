@@ -36,7 +36,7 @@ interface CompanyResearchDisplayProps {
   research: ResearchResult | null;
 }
 
-const CompanyResearchDisplay: React.FC<CompanyResearchDisplayProps> = ({ research }) => {
+const CompanyResearchDisplay: React.FC<CompanyResearchDisplayProps> = React.memo(({ research }) => {
   if (!research) return (
     <div className="p-8 text-center flex flex-col items-center justify-center h-full opacity-30">
       <Globe className="w-12 h-12 mb-4 text-text-secondary" />
@@ -99,6 +99,6 @@ const CompanyResearchDisplay: React.FC<CompanyResearchDisplayProps> = ({ researc
       )}
     </div>
   );
-};
+});
 
 export default CompanyResearchDisplay;

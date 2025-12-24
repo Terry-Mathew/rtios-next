@@ -10,16 +10,8 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, '
 }
 
 const variantStyles: Record<InputVariant, string> = {
-    boxed: `
-        bg-surface-base border border-white/10 rounded-lg px-4 py-3
-        hover:border-white/20
-        focus:border-accent focus:ring-1 focus:ring-accent
-    `,
-    underlined: `
-        bg-transparent border-b border-white/20 py-2 px-0
-        hover:border-white/30
-        focus:border-accent
-    `
+    boxed: 'bg-surface-base border border-white/10 rounded-lg px-4 py-3 hover:border-white/20 focus:border-accent focus:ring-1 focus:ring-accent',
+    underlined: 'bg-transparent border-b border-white/20 py-2 px-0 hover:border-white/30 focus:border-accent'
 };
 
 export const Input: React.FC<InputProps> = ({
@@ -55,15 +47,15 @@ export const Input: React.FC<InputProps> = ({
                 id={inputId}
                 aria-describedby={describedBy}
                 aria-invalid={!!error}
-                className={`
-                    w-full text-sm font-interstate text-text-primary
-                    placeholder-text-placeholder
-                    focus:outline-none transition-all
-                    disabled:opacity-50 disabled:cursor-not-allowed
-                    ${variantStyles[variant]}
-                    ${error ? 'border-alert-gap focus:border-alert-gap focus:ring-alert-gap/30' : ''}
-                    ${className}
-                `.trim().replace(/\s+/g, ' ')}
+                className={[
+                    'w-full text-sm font-interstate text-text-primary',
+                    'placeholder-text-placeholder',
+                    'focus:outline-none transition-all',
+                    'disabled:opacity-50 disabled:cursor-not-allowed',
+                    variantStyles[variant],
+                    error ? 'border-alert-gap focus:border-alert-gap focus:ring-alert-gap/30' : '',
+                    className
+                ].filter(Boolean).join(' ')}
                 {...props}
             />
             {error && (

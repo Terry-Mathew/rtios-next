@@ -9,7 +9,7 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 import { getAuthenticatedUser } from '@/src/utils/supabase/server';
-import type { SupabaseClient } from '@supabase/supabase-js'; // Added import for types
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { JobInfo } from '@/src/domains/jobs/types';
 import type {
   AnalysisResult,
@@ -21,6 +21,7 @@ import type {
 import { extractWebSources } from '@/src/types/gemini';
 import { checkRateLimit } from '@/src/utils/rateLimit';
 import { aiCache, generateCacheKey } from '@/src/utils/aiCache';
+import { isValidUrl, sanitizeText } from '@/src/utils/validation';
 
 // Server-side API key only (no client-side fallback)
 const apiKey = process.env.GEMINI_API_KEY;
@@ -50,11 +51,6 @@ const checkFeatureLimit = async (
   outputType: 'resume_scan' | 'company_research' | 'cover_letter' | 'linkedin_message' | 'interview_prep'
 ) => {
   // 1. Admin Bypass
-  // Note: We already check role inside the actions for Rate Limit exemption, 
-  // but we need to check again here or pass the role. 
-  // Optimization: Single query for role in the main action could serve both violations.
-  // For safety, re-querying is fine (Supabase caches somewhat or it's fast).
-
   const { data: userRole } = await supabase.from('users').select('role').eq('id', userId).single();
   if (userRole?.role === 'admin') return;
 
@@ -74,6 +70,8 @@ const checkFeatureLimit = async (
   // 3. Increment (Optimistic)
   await supabase.rpc('increment_job_output_generation', { p_job_id: jobId, p_type: outputType });
 };
+
+// ... (imports)
 
 // 1. Extract Text from Resume (PDF)
 export const extractResumeText = async (fileBase64: string, mimeType: string = 'application/pdf'): Promise<string> => {
@@ -95,7 +93,8 @@ export const extractResumeText = async (fileBase64: string, mimeType: string = '
             {
               inlineData: {
                 mimeType,
-                data: fileBase64
+                data: fileBase64 // Assuming Base64 is safe/validated by file upload limit elsewhere, but good to check size? 
+                // Next.js body limits protect us, but the prompt is text.
               }
             },
             {
@@ -108,7 +107,9 @@ export const extractResumeText = async (fileBase64: string, mimeType: string = '
         responseMimeType: 'text/plain'
       }
     });
-    return response.text || "";
+
+    // Sanitize output just in case, though AI text is usually safe content-wise, length matters.
+    return sanitizeText(response.text || "", 100000); // 100k chars for resume text seems generous but safe.
   } catch (err: unknown) {
     if (err instanceof Error && err.message.includes('Rate limit')) throw err;
     console.error("Error parsing resume:", err);
@@ -121,6 +122,12 @@ export const researchCompany = async (companyName: string, companyUrl?: string):
   try {
     const { user, supabase } = await getAuthenticatedUser();
 
+    // Validate Inputs
+    const cleanCompanyName = sanitizeText(companyName, 200);
+    const cleanCompanyUrl = isValidUrl(companyUrl) ? companyUrl : undefined;
+
+    if (!cleanCompanyName) throw new Error("Company name is required");
+
     // Rate limiting (Admin Exempt)
     const { data: currentRole } = await supabase.from('users').select('role').eq('id', user.id).single();
     if (currentRole?.role !== 'admin') {
@@ -128,14 +135,14 @@ export const researchCompany = async (companyName: string, companyUrl?: string):
     }
 
     // Check cache first
-    const cacheKey = generateCacheKey('companyResearch', { companyName, companyUrl: companyUrl || '' });
+    const cacheKey = generateCacheKey('companyResearch', { companyName: cleanCompanyName, companyUrl: cleanCompanyUrl || '' });
     const cached = aiCache.companyResearch.get(cacheKey);
     if (cached) {
-      console.log('[Cache Hit] Company research for:', companyName);
+      console.log('[Cache Hit] Company research for:', cleanCompanyName);
       return cached as ResearchResult;
     }
 
-    const prompt = `Research the company "${companyName}"${companyUrl ? ` (${companyUrl})` : ''}.
+    const prompt = `Research the company "${cleanCompanyName}"${cleanCompanyUrl ? ` (${cleanCompanyUrl})` : ''}.
     Focus on:
     1. Mission and values.
     2. Recent news (last 6 months).
@@ -203,22 +210,28 @@ export const analyzeResume = async (
     // Feature Usage Limit (3x per job)
     await checkFeatureLimit(supabase, user.id, jobInfo.id, 'resume_scan');
 
+    // Sanitize Inputs
+    const cleanResume = sanitizeText(resumeText, 50000);
+    const cleanJobDescription = sanitizeText(jobInfo.description, 50000);
+    const cleanTitle = sanitizeText(jobInfo.title, 500);
+    const cleanCompany = sanitizeText(jobInfo.company, 200);
+
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: `
         Analyze this resume against the job description.
         
         JOB DESCRIPTION:
-        Title: ${jobInfo.title}
-        Company: ${jobInfo.company}
-        Description: ${jobInfo.description}
+        Title: ${cleanTitle}
+        Company: ${cleanCompany}
+        Description: ${cleanJobDescription}
         
         RESUME:
-        ${resumeText}
+        ${cleanResume}
 
         CANDIDATE LINKS:
-        Portfolio: ${userLinks?.portfolio || "N/A"}
-        LinkedIn: ${userLinks?.linkedin || "N/A"}
+        Portfolio: ${isValidUrl(userLinks?.portfolio) ? userLinks?.portfolio : "N/A"}
+        LinkedIn: ${isValidUrl(userLinks?.linkedin) ? userLinks?.linkedin : "N/A"}
         
         Return a JSON object with:
         - score (number 0-100)
@@ -276,23 +289,32 @@ export const generateCoverLetter = async (
     // Feature Usage Limit (3x per job)
     await checkFeatureLimit(supabase, user.id, jobInfo.id, 'cover_letter');
 
+    // Sanitize
+    const cleanResume = sanitizeText(resumeText, 50000);
+    const cleanDesc = sanitizeText(jobInfo.description, 50000);
+    const cleanResearch = sanitizeText(research.summary, 20000);
+    const cleanTitle = sanitizeText(jobInfo.title, 500);
+    const cleanCompany = sanitizeText(jobInfo.company, 200);
+    const portfolioUrl = isValidUrl(userLinks?.portfolio) ? userLinks?.portfolio : "N/A";
+    const linkedinUrl = isValidUrl(userLinks?.linkedin) ? userLinks?.linkedin : "N/A";
+
     const prompt = `
       You are an expert career coach and professional writer specializing in creating compelling cover letters that get candidates interviews. Your task is to craft a cover letter that makes hiring managers think "I need to meet this person."
 
       JOB INFORMATION:
-      Title: ${jobInfo.title}
-      Company: ${jobInfo.company}
-      Job Description: ${jobInfo.description}
+      Title: ${cleanTitle}
+      Company: ${cleanCompany}
+      Job Description: ${cleanDesc}
 
       COMPANY RESEARCH & INSIGHTS:
-      ${research.summary}
+      ${cleanResearch}
 
       CANDIDATE PROFILE (Extracted from Resume):
-      ${resumeText}
+      ${cleanResume}
 
       CANDIDATE EXTERNAL LINKS:
-      Portfolio: ${userLinks?.portfolio || "N/A"}
-      LinkedIn: ${userLinks?.linkedin || "N/A"}
+      Portfolio: ${portfolioUrl}
+      LinkedIn: ${linkedinUrl}
 
       STRATEGIC REQUIREMENTS:
       1. OPENING HOOK (Critical - 2-3 sentences):
@@ -311,7 +333,7 @@ export const generateCoverLetter = async (
          - Highlight 2-3 additional relevant experiences
          - Match your skills to their specific tech stack/requirements
          - Demonstrate cultural alignment with company values
-         - If a portfolio URL is provided (${userLinks?.portfolio || "N/A"}), mention it if relevant (e.g., "You can see examples of my work in my portfolio...").
+         - If a portfolio URL is provided (${portfolioUrl}), mention it if relevant (e.g., "You can see examples of my work in my portfolio...").
 
       4. FORWARD-LOOKING CLOSE:
          - Express specific excitement about company's future/mission
@@ -384,6 +406,18 @@ export const generateLinkedInMessage = async (
     // Feature Usage Limit (3x per job)
     await checkFeatureLimit(supabase, user.id, jobInfo.id, 'linkedin_message');
 
+    // Sanitize
+    const cleanResume = sanitizeText(resumeText, 50000);
+    const cleanResearch = sanitizeText(researchSummary, 20000);
+    const recruiterName = sanitizeText(input.recruiterName || "[Name]", 100);
+    const recruiterTitle = sanitizeText(input.recruiterTitle || "Recruiter/Manager", 100);
+    const recentActivity = sanitizeText(input.recentActivity || "N/A", 1000);
+    const messageIntent = sanitizeText(input.messageIntent, 500);
+    const connectionContext = sanitizeText(input.connectionContext, 500);
+    const mutualConnection = sanitizeText(input.mutualConnection || "N/A", 100);
+    const customAddition = sanitizeText(input.customAddition || "N/A", 1000);
+    const missingContext = sanitizeText(input.missingContext || "", 1000);
+
     const prompt = `
       You are a LinkedIn messaging strategist specializing in connecting with ${input.connectionStatus === 'new' ? 'new connections' : 'existing connections'}. 
       Your messages get 40%+ response rates by striking the perfect balance between professional and personable, interested but not desperate, informative but concise.
@@ -396,26 +430,26 @@ export const generateLinkedInMessage = async (
       ---
 
       RECIPIENT INFORMATION:
-      Name: ${input.recruiterName || "[Name]"}
-      Title: ${input.recruiterTitle || "Recruiter/Manager"}
+      Name: ${recruiterName}
+      Title: ${recruiterTitle}
       Company: ${jobInfo.company}
-      Recent Activity: ${input.recentActivity || "N/A"}
+      Recent Activity: ${recentActivity}
 
       CANDIDATE INFORMATION (From Resume):
-      ${resumeText}
+      ${cleanResume}
 
       JOB/INTENT CONTEXT:
       Target Role: ${jobInfo.title}
-      Message Intent: ${input.messageIntent}
-      Connection Context: ${input.connectionContext}
-      Mutual Connection: ${input.mutualConnection || "N/A"}
+      Message Intent: ${messageIntent}
+      Connection Context: ${connectionContext}
+      Mutual Connection: ${mutualConnection}
 
       CUSTOM ADDITIONS:
-      ${input.customAddition || "N/A"}
-      ${input.missingContext ? `\n      ADDITIONAL CONTEXT FROM USER:\n      ${input.missingContext}` : ''}
+      ${customAddition}
+      ${missingContext ? `\n      ADDITIONAL CONTEXT FROM USER:\n      ${missingContext}` : ''}
 
       COMPANY RESEARCH:
-      ${researchSummary}
+      ${cleanResearch}
 
       ---
 
@@ -454,7 +488,7 @@ export const generateLinkedInMessage = async (
       Return ONLY the message text, ready to send on LinkedIn.
       - No subject line
       - No signature block
-      - Start with "Hi ${input.recruiterName || 'there'},"
+      - Start with "Hi ${recruiterName || 'there'},"
       - Use line breaks between paragraphs.
     `;
 
@@ -489,6 +523,14 @@ export const generateInterviewQuestions = async (
     // Feature Usage Limit (3x per job)
     await checkFeatureLimit(supabase, user.id, jobInfo.id, 'interview_prep');
 
+    // Sanitize
+    const cleanResume = sanitizeText(resumeText, 50000);
+    const cleanDesc = sanitizeText(jobInfo.description, 50000);
+    const cleanTitle = sanitizeText(jobInfo.title, 500);
+    const cleanCompany = sanitizeText(jobInfo.company, 200);
+    const portfolioUrl = isValidUrl(userLinks?.portfolio) ? userLinks?.portfolio : "";
+    const linkedinUrl = isValidUrl(userLinks?.linkedin) ? userLinks?.linkedin : "";
+
     const prompt = `
       You are an elite interview coach for senior-level Product and Data Product Management roles.
 
@@ -496,16 +538,16 @@ export const generateInterviewQuestions = async (
       answer confidently and clearly in a live interview.
 
       JOB CONTEXT:
-      Title: ${jobInfo.title}
-      Company: ${jobInfo.company}
-      Description: ${jobInfo.description}
+      Title: ${cleanTitle}
+      Company: ${cleanCompany}
+      Description: ${cleanDesc}
 
       CANDIDATE RESUME:
-      ${resumeText}
+      ${cleanResume}
 
       CANDIDATE LINKS (for context):
-      ${userLinks.portfolio ? `Portfolio: ${userLinks.portfolio}` : ''}
-      ${userLinks.linkedin ? `LinkedIn: ${userLinks.linkedin}` : ''}
+      ${portfolioUrl ? `Portfolio: ${portfolioUrl}` : ''}
+      ${linkedinUrl ? `LinkedIn: ${linkedinUrl}` : ''}
 
       EXISTING QUESTIONS (do not repeat):
       ${existingQuestions.join("; ")}
@@ -613,6 +655,10 @@ export const extractJobFromUrl = async (url: string): Promise<JobInfo> => {
   try {
     const { user, supabase } = await getAuthenticatedUser();
 
+    if (!isValidUrl(url)) {
+      throw new Error("Invalid URL provided.");
+    }
+
     // Rate Limiting (Admin Exempt)
     const { data: currentRole } = await supabase.from('users').select('role').eq('id', user.id).single();
     if (currentRole?.role !== 'admin') {
@@ -653,7 +699,12 @@ export const extractJobFromUrl = async (url: string): Promise<JobInfo> => {
     const jsonText = response.text;
     if (!jsonText) throw new Error("Empty extraction response");
 
-    return JSON.parse(jsonText) as JobInfo;
+    // Sanitize output just in case
+    const info = JSON.parse(jsonText) as JobInfo;
+    return {
+      ...info,
+      description: sanitizeText(info.description, 50000), // Ensure we don't return crazy large blobs if AI goes haywire (unlikely)
+    }
 
   } catch (err: unknown) {
     console.error("Error extracting job from URL:", err);

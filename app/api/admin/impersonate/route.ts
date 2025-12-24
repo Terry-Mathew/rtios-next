@@ -1,67 +1,38 @@
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { getAuthenticatedAdmin } from '@/src/utils/supabase/server';
+import { rateLimit } from '@/src/utils/rate-limit';
+
+// Strict rate limit for impersonation: 5 requests per minute per admin IP (or just per admin)
+const limiter = rateLimit(5);
 
 export async function POST(request: Request) {
     try {
         const { userId } = await request.json();
-        const cookieStore = await cookies();
 
-        // 1. Verify Admin Access (using Standard Client)
-        const supabase = createServerClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-                cookies: {
-                    getAll: () => cookieStore.getAll(),
-                    setAll: (cookiesToSet) => {
-                        try {
-                            cookiesToSet.forEach(({ name, value, options }) =>
-                                cookieStore.set(name, value, options)
-                            );
-                        } catch { }
-                    },
-                },
-            }
-        );
+        // 1. Authenticate & Authorize Admin
+        // This helper handles checking cookies, checking the DB role, and throwing if invalid.
+        // It also returns an 'adminClient' with service_role privileges.
+        const { user: adminUser, adminClient } = await getAuthenticatedAdmin();
 
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (!user) {
-            return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+        // 2. Rate Limit (Per Admin ID)
+        const limit = limiter.check(adminUser.id);
+        if (limit.isRateLimited) {
+            return NextResponse.json({ error: 'Too many requests. Please wait.' }, { status: 429 });
         }
 
-        const { data: admin } = await supabase
-            .from('users')
-            .select('role')
-            .eq('id', user.id)
-            .single();
-
-        if (admin?.role !== 'admin') {
-            return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+        if (!userId) {
+            return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
         }
 
-        // 2. Generate Magic Link (using Service Role Client)
-        // We need service_role to generate links for OTHER users
-        const supabaseAdmin = createServerClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY!,
-            {
-                cookies: {
-                    getAll: () => [],
-                    setAll: () => { },
-                },
-            }
-        );
-
-        // Get the user's email first
-        const { data: targetUser, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
+        // 3. Get Target User Email
+        const { data: targetUser, error: userError } = await adminClient.auth.admin.getUserById(userId);
 
         if (userError || !targetUser.user?.email) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
-        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+        // 4. Generate Magic Link
+        const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
             type: 'magiclink',
             email: targetUser.user.email,
         });
@@ -76,6 +47,12 @@ export async function POST(request: Request) {
 
     } catch (error) {
         console.error('Error generating impersonation link:', error);
-        return NextResponse.json({ error: error instanceof Error ? error.message : 'Internal Server Error' }, { status: 500 });
+        const message = error instanceof Error ? error.message : 'Internal Server Error';
+
+        if (message.includes('Forbidden') || message.includes('Unauthorized')) {
+            return NextResponse.json({ error: message }, { status: 403 });
+        }
+
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }

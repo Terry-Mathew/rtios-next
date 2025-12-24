@@ -1,48 +1,10 @@
 'use server';
 
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { getAuthenticatedUser, createSupabaseAdminClient } from '@/src/utils/supabase/server';
 import { UserProfile, UserStats } from './types';
 
-// Helper to create safe server client
-async function createSupabaseServerClient() {
-    const cookieStore = await cookies();
+// Note: Replaced internal helpers with imports from '@/src/utils/supabase/server'
 
-    return createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-        {
-            cookies: {
-                getAll() {
-                    return cookieStore.getAll();
-                },
-                setAll(cookiesToSet) {
-                    try {
-                        cookiesToSet.forEach(({ name, value, options }) =>
-                            cookieStore.set(name, value, options)
-                        );
-                    } catch {
-                        // The `setAll` method was called from a Server Component.
-                        // This can be ignored if you have middleware refreshing
-                        // user sessions.
-                    }
-                },
-            },
-        }
-    );
-}
-
-// Helper to get authenticated user
-async function getAuthenticatedUser() {
-    const supabase = await createSupabaseServerClient();
-    const { data: { user }, error } = await supabase.auth.getUser();
-
-    if (error || !user) {
-        throw new Error('Unauthorized');
-    }
-
-    return { user, supabase };
-}
 
 export async function getUserProfile(): Promise<UserProfile> {
     const { user, supabase } = await getAuthenticatedUser();
@@ -144,11 +106,8 @@ export async function deleteUserAccount() {
     // The Prompt's suggested actions.ts used `process.env.SUPABASE_SERVICE_ROLE_KEY` inside the action.
     // So I WILL use it, but only for the deletion part which needs admin.
 
-    const adminSupabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY! || process.env.SUPABASE_SECRET_KEY!,
-        { cookies: { getAll: () => [], setAll: () => { } } } // No cookies needed for admin
-    );
+    // Use centralized admin helper
+    const adminSupabase = await createSupabaseAdminClient();
 
     const { error } = await adminSupabase.auth.admin.deleteUser(user.id);
 

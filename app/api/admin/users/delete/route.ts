@@ -1,61 +1,44 @@
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { getAuthenticatedAdmin } from '@/src/utils/supabase/server';
+import { rateLimit } from '@/src/utils/rate-limit';
+
+// Strict rate limiter: 5 deletes per minute (prevent mass wiper)
+const limiter = rateLimit(5);
 
 export async function POST(request: Request) {
     try {
         const { userId } = await request.json();
-        const cookieStore = await cookies();
 
-        // 1. Verify Admin Access (Regular Client)
-        const supabase = createServerClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-                cookies: {
-                    getAll: () => cookieStore.getAll(),
-                    setAll: (cookiesToSet) => {
-                        try {
-                            cookiesToSet.forEach(({ name, value, options }) =>
-                                cookieStore.set(name, value, options)
-                            );
-                        } catch { }
-                    },
-                },
-            }
-        );
+        // 1. Authenticate Admin & Get Service Client
+        const { user: adminUser, adminClient } = await getAuthenticatedAdmin();
 
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-        const { data: admin } = await supabase.from('users').select('role').eq('id', user.id).single();
-        if (admin?.role !== 'admin') {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        // 2. Rate Limit
+        const limit = limiter.check(adminUser.id);
+        if (limit.isRateLimited) {
+            return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
         }
 
-        // 2. Delete User from Auth (Service Role Client)
-        const supabaseAdmin = createServerClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY!,
-            {
-                cookies: {
-                    getAll: () => [],
-                    setAll: () => { },
-                },
-            }
-        );
+        if (!userId) {
+            return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
+        }
 
-        const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+        // 3. Delete from Auth (requires Service Role)
+        const { error } = await adminClient.auth.admin.deleteUser(userId);
         if (error) throw error;
 
-        // public.users should cascade delete if FK is set up correctly.
-        // Use manual delete just in case to be thorough if FK isn't ON DELETE CASCADE
-        await supabaseAdmin.from('users').delete().eq('id', userId);
+        // 4. Manual cleanup just in case Cascade isn't perfect (safe redundancy)
+        await adminClient.from('users').delete().eq('id', userId);
 
         return NextResponse.json({ success: true });
 
     } catch (error) {
         console.error('Error deleting user:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+
+        const message = error instanceof Error ? error.message : 'Internal Server Error';
+        if (message.includes('Forbidden') || message.includes('Unauthorized')) {
+            return NextResponse.json({ error: message }, { status: 403 });
+        }
+
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }

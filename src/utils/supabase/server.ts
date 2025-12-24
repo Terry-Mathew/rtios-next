@@ -39,3 +39,47 @@ export async function getAuthenticatedUser(): Promise<{ user: User, supabase: Su
 
   return { user, supabase };
 }
+
+// Helper to create Admin Client (Service Role)
+export async function createSupabaseAdminClient() {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey) {
+    throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY');
+  }
+
+  // Note: We do NOT pass cookies here because this is for Admin actions, not user actions.
+  // Using pure supabase-js client for service role operations.
+  const { createClient } = await import('@supabase/supabase-js');
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    serviceRoleKey,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  );
+}
+
+// Helper to get authenticated ADMIN
+export async function getAuthenticatedAdmin(): Promise<{ user: User, supabase: SupabaseClient, adminClient: SupabaseClient }> {
+  // 1. Get standard user
+  const { user, supabase } = await getAuthenticatedUser();
+
+  // 2. Verify Role via public.users
+  const { data: roleData, error } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (error || !roleData || roleData.role !== 'admin') {
+    console.warn(`Unauthorized Admin Access Attempt by: ${user.id}`);
+    throw new Error('Forbidden: Admin Access Required');
+  }
+
+  // 3. Return user + admin client (for elevated actions)
+  const adminClient = await createSupabaseAdminClient();
+  return { user, supabase, adminClient };
+}
