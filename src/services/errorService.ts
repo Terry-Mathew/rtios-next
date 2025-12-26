@@ -1,9 +1,11 @@
 /**
  * Error Service
- * 
+ *
  * Centralized error handling service for the application.
  * Provides consistent error logging, user-friendly messages, and hooks for external monitoring.
  */
+
+import { logger } from '@/src/utils/logger';
 
 interface ErrorContext {
   component: string;
@@ -42,10 +44,12 @@ class ErrorService {
     // Sanitize context before logging to prevent PII exposure
     const sanitizedContext = this.sanitizeContext(context);
 
-    // Only log in development, and always sanitize
-    if (process.env.NODE_ENV === 'development') {
-      console.error(`[${context.component}::${context.action}]`, error, sanitizedContext);
-    }
+    // Use structured logger
+    logger.error(
+      `Error in ${context.component}::${context.action}`,
+      error instanceof Error ? error : new Error(String(error)),
+      sanitizedContext
+    );
 
     // Extract user-friendly message
     const message = this.extractMessage(error);
@@ -99,7 +103,7 @@ class ErrorService {
       component: context.component,
       action: context.action,
     };
-    console.warn('[ErrorService::Log]', error, sanitized);
+    logger.warn('Non-critical error', sanitized);
   }
 
   /**
