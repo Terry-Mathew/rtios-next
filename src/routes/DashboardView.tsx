@@ -8,6 +8,7 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import Dashboard from '@/src/components/layout/Dashboard';
 import { useResumeManagement } from '@/src/hooks/useResumeManagement';
 import { useJobManagement } from '@/src/hooks/useJobManagement';
@@ -64,10 +65,14 @@ const DashboardView: React.FC = () => {
                 <nav className="w-20 bg-surface-base border-r border-white/5 flex flex-col items-center py-6 shrink-0 z-20">
                     {/* Logo */}
                     <div className="mb-8 cursor-pointer" onClick={() => router.push('/')}>
-                        <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center shadow-[0_0_20px_rgba(0,255,127,0.2)]">
-                            <svg className="w-6 h-6 text-surface-base fill-surface-base" viewBox="0 0 24 24">
-                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                            </svg>
+                        <div className="relative w-10 h-10 rounded-lg overflow-hidden shadow-[0_0_20px_rgba(0,255,127,0.2)]">
+                            <Image
+                                src="/favicon.ico"
+                                alt="Rtios Logo"
+                                fill
+                                className="object-cover"
+                                priority
+                            />
                         </div>
                     </div>
 

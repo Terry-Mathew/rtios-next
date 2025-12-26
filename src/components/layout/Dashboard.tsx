@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { JobInfo, SavedResume, UserProfile } from '@/src/types';
 import { Trash2, FileText, CheckCircle2, ArrowRight, Upload, Briefcase, Globe, User, RotateCcw, Edit2, Save, X } from 'lucide-react';
-import { supabaseBrowser } from '@/src/services/supabase';
+import { updateUserProfile as updateUserProfileAction } from '@/src/domains/user/actions';
 
 interface DashboardProps {
     jobs: JobInfo[];
@@ -17,6 +17,7 @@ interface DashboardProps {
     onNavigateToApp: () => void;
     isLoading?: boolean;
 }
+
 
 // --- PROFILE CARD COMPONENT ---
 const ProfileCard: React.FC<{ userProfile: UserProfile; onUpdateProfile: (p: UserProfile) => void; isLoading?: boolean }> = ({ userProfile, onUpdateProfile, isLoading }) => {
@@ -40,20 +41,17 @@ const ProfileCard: React.FC<{ userProfile: UserProfile; onUpdateProfile: (p: Use
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            const { data: { user } } = await supabaseBrowser.auth.getUser();
-            if (!user) throw new Error("No user");
+            // 1. Server Action to Update DB
+            await updateUserProfileAction({
+                fullName,
+                portfolioUrl,
+                linkedinUrl
+            });
 
-            // 1. Update Profile (Name)
-            const { error } = await supabaseBrowser
-                .from('profiles')
-                .update({ full_name: fullName })
-                .eq('id', user.id);
-
-            if (error) throw error;
-
-            // 2. Update Store (Links)
+            // 2. Update Store (State)
             onUpdateProfile({
                 ...userProfile,
+                fullName,
                 portfolioUrl,
                 linkedinUrl
             });

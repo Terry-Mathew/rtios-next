@@ -141,3 +141,23 @@ export async function exportUserData() {
         exportedAt: new Date().toISOString(),
     };
 }
+
+export async function updateUserProfile(data: { fullName?: string; linkedinUrl?: string; portfolioUrl?: string }) {
+    const { user, supabase } = await getAuthenticatedUser();
+
+    // Map frontend camelCase to DB snake_case
+    const updates: any = {
+        updated_at: new Date().toISOString(),
+    };
+    if (data.fullName !== undefined) updates.full_name = data.fullName;
+    if (data.linkedinUrl !== undefined) updates.linkedin_url = data.linkedinUrl;
+    if (data.portfolioUrl !== undefined) updates.portfolio_url = data.portfolioUrl;
+
+    const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id);
+
+    if (error) throw new Error(error.message);
+    return { success: true };
+}
