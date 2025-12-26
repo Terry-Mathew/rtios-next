@@ -27,11 +27,11 @@ export const getResumeSignedUrl = async (resumeId: string, expiresInSeconds: num
   let allowed = resume.user_id === actorId;
   if (!allowed) {
     const { data: admin } = await client
-      .from('beta_users')
+      .from('users')
       .select('role')
-      .eq('user_id', actorId)
+      .eq('id', actorId)
       .single();
-    allowed = !!admin && admin.role === 'beta_admin';
+    allowed = !!admin && admin.role === 'admin';
   }
   if (!allowed) throw new Error('Forbidden');
   return storageServer.createSignedUrl(resume.storage_path, expiresInSeconds);

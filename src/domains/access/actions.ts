@@ -8,12 +8,12 @@ export type AccessRole = 'beta_user' | 'beta_admin';
 const ensureAdmin = async (userId: string) => {
   const client = getSupabaseServer();
   const { data, error } = await client
-    .from('beta_users')
+    .from('users')
     .select('role')
-    .eq('user_id', userId)
+    .eq('id', userId)
     .single();
   if (error) throw error;
-  if (!data || data.role !== 'beta_admin') {
+  if (!data || data.role !== 'admin') {
     throw new Error('Forbidden: admin role required');
   }
 };
@@ -91,8 +91,9 @@ export const approveAccessRequest = async (requestId: string, decidedByUserId: s
     .single();
   if (reqErr) throw reqErr;
   const { error: userErr } = await client
-    .from('beta_users')
-    .upsert({ user_id: req.user_id, role, permissions, approved_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    .from('users')
+    .update({ role: role === 'beta_admin' ? 'admin' : 'user' })
+    .eq('id', req.user_id);
   if (userErr) throw userErr;
   await logAudit(decidedByUserId, 'approve', 'beta_access_requests', requestId, { role, permissions });
   return req;
@@ -115,9 +116,9 @@ export const denyAccessRequest = async (requestId: string, decidedByUserId: stri
 export const listBetaUsers = async () => {
   const client = getSupabaseServer();
   const { data, error } = await client
-    .from('beta_users')
+    .from('users')
     .select('*')
-    .order('approved_at', { ascending: false });
+    .order('created_at', { ascending: false });
   if (error) throw error;
   return data;
 };

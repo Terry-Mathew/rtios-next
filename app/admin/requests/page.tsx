@@ -43,11 +43,11 @@ export default async function AdminRequestsPage({ searchParams }: { searchParams
   if (actorId) {
     const client = getSupabaseServer();
     const { data } = await client
-      .from('beta_users')
+      .from('users')
       .select('role')
-      .eq('user_id', actorId)
+      .eq('id', actorId)
       .single();
-    isAdmin = !!data && data.role === 'beta_admin';
+    isAdmin = !!data && data.role === 'admin';
   }
   if (!isAdmin) {
     return (
