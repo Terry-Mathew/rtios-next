@@ -41,6 +41,17 @@ export async function POST(request: Request) {
             throw linkError;
         }
 
+        // 5. Log Audit Trail
+        await adminClient
+            .from('audit_logs')
+            .insert([{
+                actor_user_id: adminUser.id,
+                action: 'impersonate',
+                entity_type: 'user',
+                entity_id: userId,
+                metadata: { target_email: targetUser.user.email }
+            }]);
+
         return NextResponse.json({
             url: linkData.properties.action_link
         });

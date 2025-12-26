@@ -22,7 +22,13 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
         }
 
-        // 3. Reset Usage (Delete all jobs)
+        // 3. Get job count before deletion (for audit log)
+        const { count } = await supabase
+            .from('jobs')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId);
+
+        // 4. Reset Usage (Delete all jobs)
         const { error } = await supabase
             .from('jobs')
             .delete()
@@ -32,6 +38,17 @@ export async function POST(request: NextRequest) {
             console.error('Error resetting user usage:', error);
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
+
+        // 5. Log Audit Trail
+        await supabase
+            .from('audit_logs')
+            .insert([{
+                actor_user_id: adminUser.id,
+                action: 'reset_usage',
+                entity_type: 'user',
+                entity_id: userId,
+                metadata: { jobs_deleted: count || 0 }
+            }]);
 
         return NextResponse.json({
             success: true,
