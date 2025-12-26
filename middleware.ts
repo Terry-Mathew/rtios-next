@@ -1,6 +1,9 @@
 import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 
+// Routes that don't require approval
+const PUBLIC_ROUTES = ['/login', '/signup', '/auth', '/pending-approval', '/api/auth'];
+
 export async function middleware(request: NextRequest) {
     const response = NextResponse.next({
         request: {
@@ -26,7 +29,28 @@ export async function middleware(request: NextRequest) {
         }
     );
 
-    await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
+    const pathname = request.nextUrl.pathname;
+
+    // Skip approval check for public routes or unauthenticated users
+    const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route));
+    if (!user || isPublicRoute) {
+        return response;
+    }
+
+    // Check if user is approved or admin
+    const { data: appUser } = await supabase
+        .from('users')
+        .select('is_approved, role')
+        .eq('id', user.id)
+        .single();
+
+    const isApprovedOrAdmin = appUser?.is_approved === true || appUser?.role === 'admin';
+
+    // Redirect unapproved users to pending page
+    if (!isApprovedOrAdmin) {
+        return NextResponse.redirect(new URL('/pending-approval', request.url));
+    }
 
     return response;
 }

@@ -161,3 +161,29 @@ export async function updateUserProfile(data: { fullName?: string; linkedinUrl?:
     if (error) throw new Error(error.message);
     return { success: true };
 }
+
+// Admin Actions for User Approval
+export async function approveUser(userId: string) {
+    const adminSupabase = await createSupabaseAdminClient();
+
+    const { error } = await adminSupabase
+        .from('users')
+        .update({ is_approved: true })
+        .eq('id', userId);
+
+    if (error) throw new Error(error.message);
+    return { success: true };
+}
+
+export async function denyUser(userId: string) {
+    const adminSupabase = await createSupabaseAdminClient();
+
+    const { error } = await adminSupabase
+        .from('users')
+        .update({ is_approved: false })
+        .eq('id', userId);
+
+    if (error) throw new Error(error.message);
+    return { success: true };
+}
+

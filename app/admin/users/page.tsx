@@ -10,6 +10,7 @@ import { ResetUsageButton } from '@/app/admin/users/ResetUsageButton';
 import { ImpersonateButton } from '@/app/admin/users/ImpersonateButton';
 import { BanUserButton } from '@/app/admin/users/BanUserButton';
 import { DeleteUserButton } from '@/app/admin/users/DeleteUserButton';
+import { ApprovalButtons } from '@/app/admin/users/ApprovalButtons';
 
 async function checkAdminAccess() {
     const cookieStore = await cookies();
@@ -174,6 +175,7 @@ export default async function UserManagement() {
                                             </td>
                                             <td className="p-4">
                                                 <div className="flex gap-2 items-center">
+                                                    <ApprovalButtons userId={user.id} isApproved={user.is_approved ?? false} />
                                                     <UpgradeUserButton userId={user.id} currentRole={user.role} />
 
                                                     {/* Admin Tools for Non-Admin Users */}
