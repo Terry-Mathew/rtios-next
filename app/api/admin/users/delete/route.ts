@@ -22,11 +22,22 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
         }
 
-        // 3. Delete from Auth (requires Service Role)
+        // 3. Log Audit Trail (before deletion)
+        await adminClient
+            .from('audit_logs')
+            .insert([{
+                actor_user_id: adminUser.id,
+                action: 'delete',
+                entity_type: 'user',
+                entity_id: userId,
+                metadata: {}
+            }]);
+
+        // 4. Delete from Auth (requires Service Role)
         const { error } = await adminClient.auth.admin.deleteUser(userId);
         if (error) throw error;
 
-        // 4. Manual cleanup just in case Cascade isn't perfect (safe redundancy)
+        // 5. Manual cleanup just in case Cascade isn't perfect (safe redundancy)
         await adminClient.from('users').delete().eq('id', userId);
 
         return NextResponse.json({ success: true });

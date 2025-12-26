@@ -30,6 +30,17 @@ export async function POST(request: Request) {
 
         if (error) throw error;
 
+        // 4. Log Audit Trail
+        await supabase
+            .from('audit_logs')
+            .insert([{
+                actor_user_id: adminUser.id,
+                action: status === 'banned' ? 'ban' : 'unban',
+                entity_type: 'user',
+                entity_id: userId,
+                metadata: { status }
+            }]);
+
         return NextResponse.json({ success: true });
 
     } catch (error) {

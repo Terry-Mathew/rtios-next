@@ -22,6 +22,7 @@ import { extractWebSources } from '@/src/types/gemini';
 import { checkRateLimit } from '@/src/utils/rateLimit';
 import { aiCache, generateCacheKey } from '@/src/utils/aiCache';
 import { isValidUrl, sanitizeText } from '@/src/utils/validation';
+import { logger } from '@/src/utils/logger';
 
 // Server-side API key only (no client-side fallback)
 const apiKey = process.env.GEMINI_API_KEY;
@@ -75,8 +76,12 @@ const checkFeatureLimit = async (
 
 // 1. Extract Text from Resume (PDF)
 export const extractResumeText = async (fileBase64: string, mimeType: string = 'application/pdf'): Promise<string> => {
+  const startTime = Date.now();
+  let userId: string | undefined;
+
   try {
     const { user, supabase } = await getAuthenticatedUser();
+    userId = user.id;
 
     // Rate Limiting (Admin Exempt)
     const { data: currentRole } = await supabase.from('users').select('role').eq('id', user.id).single();
@@ -93,7 +98,7 @@ export const extractResumeText = async (fileBase64: string, mimeType: string = '
             {
               inlineData: {
                 mimeType,
-                data: fileBase64 // Assuming Base64 is safe/validated by file upload limit elsewhere, but good to check size? 
+                data: fileBase64 // Assuming Base64 is safe/validated by file upload limit elsewhere, but good to check size?
                 // Next.js body limits protect us, but the prompt is text.
               }
             },
@@ -108,11 +113,30 @@ export const extractResumeText = async (fileBase64: string, mimeType: string = '
       }
     });
 
+    const extractedText = sanitizeText(response.text || "", 100000);
+    const duration = Date.now() - startTime;
+
+    logger.aiCall('extractResumeText', duration, true, {
+      component: 'intelligence/actions',
+      userId,
+      model: 'gemini-2.5-flash',
+      mimeType,
+      responseLength: extractedText.length
+    });
+
     // Sanitize output just in case, though AI text is usually safe content-wise, length matters.
-    return sanitizeText(response.text || "", 100000); // 100k chars for resume text seems generous but safe.
+    return extractedText;
   } catch (err: unknown) {
+    const duration = Date.now() - startTime;
+    logger.aiCall('extractResumeText', duration, false, {
+      component: 'intelligence/actions',
+      userId,
+      model: 'gemini-2.5-flash',
+      error: err instanceof Error ? err.message : String(err)
+    });
+
     if (err instanceof Error && err.message.includes('Rate limit')) throw err;
-    console.error("Error parsing resume:", err);
+    logger.error("Error parsing resume", err, { component: 'extractResumeText', userId });
     throw new Error(`Failed to extract text from resume: ${err instanceof Error ? err.message : String(err)}`);
   }
 };

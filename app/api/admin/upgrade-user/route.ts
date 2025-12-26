@@ -22,7 +22,13 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing userId or role' }, { status: 400 });
         }
 
-        // 3. Update User Role
+        // 3. Validate role
+        const validRoles = ['user', 'admin'];
+        if (!validRoles.includes(role)) {
+            return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
+        }
+
+        // 4. Update User Role
         const { error } = await supabase
             .from('users')
             .update({ role })
@@ -32,6 +38,17 @@ export async function POST(request: NextRequest) {
             console.error('Error updating user role:', error);
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
+
+        // 5. Log Audit Trail
+        await supabase
+            .from('audit_logs')
+            .insert([{
+                actor_user_id: adminUser.id,
+                action: 'upgrade_role',
+                entity_type: 'user',
+                entity_id: userId,
+                metadata: { new_role: role }
+            }]);
 
         return NextResponse.json({ success: true, message: `User role updated to ${role}` });
     } catch (error) {
