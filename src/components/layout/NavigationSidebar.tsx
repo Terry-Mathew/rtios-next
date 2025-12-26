@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Hexagon, LayoutGrid, FileText, MessageSquare, Brain, Shield } from 'lucide-react';
+import Image from 'next/image';
+import { LayoutGrid, FileText, MessageSquare, Brain, Shield } from 'lucide-react';
 import { useAppStore } from '@/src/stores/appStore';
 
 interface NavigationSidebarProps {
@@ -65,8 +66,14 @@ export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
         `}>
             {/* Logo - Hidden on mobile */}
             <div className="hidden lg:block mb-8 cursor-pointer" onClick={onLogoClick}>
-                <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center shadow-[0_0_20px_rgba(0,255,127,0.2)]">
-                    <Hexagon className="w-6 h-6 text-surface-base fill-surface-base" />
+                <div className="relative w-10 h-10 rounded-lg overflow-hidden shadow-[0_0_20px_rgba(0,255,127,0.2)]">
+                    <Image
+                        src="/favicon.ico"
+                        alt="Rtios Logo"
+                        fill
+                        className="object-cover"
+                        priority
+                    />
                 </div>
             </div>
 

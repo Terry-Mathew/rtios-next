@@ -132,9 +132,6 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                         <InputForm
                             resumes={resumes}
                             activeResumeId={activeResumeId}
-                            onAddResume={onAddResume}
-                            onSelectResume={onSelectResume}
-                            onDeleteResume={onDeleteResume}
                             jobs={jobs}
                             activeJobId={activeJobId}
                             onAddJob={onAddJob}
