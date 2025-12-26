@@ -63,12 +63,6 @@ async function getAdminStats() {
         .from('jobs')
         .select('*', { count: 'exact', head: true });
 
-    // Pending requests
-    const { count: pendingRequests } = await supabase
-        .from('access_requests')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending');
-
     // Users at limit
     const { data: allUsers } = await supabase
         .from('users')
@@ -88,7 +82,6 @@ async function getAdminStats() {
     return {
         totalUsers: totalUsers || 0,
         totalJobs: totalJobs || 0,
-        pendingRequests: pendingRequests || 0,
         usersAtLimit
     };
 }
@@ -130,7 +123,7 @@ export default async function AdminDashboard() {
                 </div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                     <div className="bg-surface-elevated border border-white/10 rounded-lg p-6">
                         <div className="flex items-center justify-between mb-2">
                             <span className="text-text-secondary text-sm font-interstate uppercase tracking-wider">Total Users</span>
@@ -149,14 +142,6 @@ export default async function AdminDashboard() {
 
                     <div className="bg-surface-elevated border border-white/10 rounded-lg p-6">
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-text-secondary text-sm font-interstate uppercase tracking-wider">Pending Requests</span>
-                            <Shield className="w-5 h-5 text-yellow-400" />
-                        </div>
-                        <p className="text-3xl font-bold">{stats.pendingRequests}</p>
-                    </div>
-
-                    <div className="bg-surface-elevated border border-white/10 rounded-lg p-6">
-                        <div className="flex items-center justify-between mb-2">
                             <span className="text-text-secondary text-sm font-interstate uppercase tracking-wider">Users at Limit</span>
                             <Settings className="w-5 h-5 text-red-400" />
                         </div>
@@ -165,7 +150,7 @@ export default async function AdminDashboard() {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Link
                         href="/admin/users"
                         className="bg-surface-elevated border border-white/10 rounded-lg p-6 hover:bg-white/5 transition-colors"
@@ -174,17 +159,6 @@ export default async function AdminDashboard() {
                         <h3 className="font-tiempos text-lg font-bold mb-2">User Management</h3>
                         <p className="text-sm text-text-secondary">
                             View all users, manage roles, reset usage limits
-                        </p>
-                    </Link>
-
-                    <Link
-                        href="/admin/requests"
-                        className="bg-surface-elevated border border-white/10 rounded-lg p-6 hover:bg-white/5 transition-colors"
-                    >
-                        <Shield className="w-8 h-8 text-yellow-400 mb-3" />
-                        <h3 className="font-tiempos text-lg font-bold mb-2">Beta Requests</h3>
-                        <p className="text-sm text-text-secondary">
-                            Approve or deny pending access requests
                         </p>
                     </Link>
 
