@@ -11,9 +11,24 @@ export async function middleware(request: NextRequest) {
         },
     });
 
+    // Debug: Check if env vars are available
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+    if (!url || !key) {
+        console.error('❌ Middleware env vars missing:', {
+            hasUrl: !!url,
+            hasKey: !!key,
+            url: url ? 'present' : 'MISSING',
+            key: key ? 'present' : 'MISSING'
+        });
+        // Allow request to continue even if Supabase is not configured
+        return response;
+    }
+
     const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+        url,
+        key,
         {
             cookies: {
                 getAll() {

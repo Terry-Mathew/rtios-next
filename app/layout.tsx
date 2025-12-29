@@ -1,19 +1,21 @@
 import type { Metadata } from "next";
-import { Inter, Crimson_Text } from "next/font/google";
+import { Work_Sans, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/src/components/layout/AppShell";
 import { CareerContextProvider } from "@/src/domains/career/CareerContextProvider";
 
-const inter = Inter({
-  variable: "--font-inter",
+// Neo-Brutalist Fonts - Bold, Geometric, High Impact
+const workSans = Work_Sans({
+  variable: "--font-work-sans",
   subsets: ["latin"],
+  weight: ["400", "600", "700", "800", "900"],
   display: "swap",
 });
 
-const crimsonText = Crimson_Text({
-  variable: "--font-crimson",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -30,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${crimsonText.variable} antialiased`}
+        className={`${workSans.variable} ${spaceGrotesk.variable} antialiased`}
         suppressHydrationWarning
       >
         <CareerContextProvider>

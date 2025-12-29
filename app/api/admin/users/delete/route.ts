@@ -1,27 +1,36 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedAdmin } from '@/src/utils/supabase/server';
-import { rateLimit } from '@/src/utils/rateLimit';
+import { rateLimit, getRateLimitHeaders } from '@/src/utils/rateLimit';
 import { logger } from '@/src/utils/logger';
+import { validateRequestBody, deleteUserSchema } from '@/src/utils/validation/adminSchemas';
 
 // Strict rate limiter: 5 deletes per minute (prevent mass wiper)
 const limiter = rateLimit(5);
 
 export async function POST(request: Request) {
     try {
-        const { userId } = await request.json();
+        // 0. Validate Request Body
+        const validation = await validateRequestBody(request, deleteUserSchema);
+        if (!validation.success) {
+            return NextResponse.json({ error: validation.error }, { status: 400 });
+        }
+        const { userId } = validation.data;
 
         // 1. Authenticate Admin & Get Service Client
         const { user: adminUser, adminClient } = await getAuthenticatedAdmin();
 
         // 2. Rate Limit
         const limit = limiter.check(adminUser.id);
+        const rateLimitHeaders = getRateLimitHeaders(limit);
+
         if (limit.isRateLimited) {
-            return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+            return NextResponse.json(
+                { error: 'Rate limit exceeded' },
+                { status: 429, headers: rateLimitHeaders }
+            );
         }
 
-        if (!userId) {
-            return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
-        }
+        // userId is already validated by Zod schema
 
         // 3. Log Audit Trail (before deletion)
         const { error: auditError } = await adminClient
@@ -51,7 +60,10 @@ export async function POST(request: Request) {
         // 5. Manual cleanup just in case Cascade isn't perfect (safe redundancy)
         await adminClient.from('users').delete().eq('id', userId);
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json(
+            { success: true },
+            { headers: rateLimitHeaders }
+        );
 
     } catch (error) {
         console.error('Error deleting user:', error);

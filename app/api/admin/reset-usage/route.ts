@@ -1,27 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedAdmin } from '@/src/utils/supabase/server';
-import { rateLimit } from '@/src/utils/rateLimit';
+import { rateLimit, getRateLimitHeaders } from '@/src/utils/rateLimit';
 import { logger } from '@/src/utils/logger';
+import { validateRequestBody, resetUsageSchema } from '@/src/utils/validation/adminSchemas';
 
 // Strict rate limiter: 5 deletes per minute
 const limiter = rateLimit(5);
 
 export async function POST(request: NextRequest) {
     try {
-        const { userId } = await request.json();
+        // 0. Validate Request Body
+        const validation = await validateRequestBody(request, resetUsageSchema);
+        if (!validation.success) {
+            return NextResponse.json({ error: validation.error }, { status: 400 });
+        }
+        const { userId } = validation.data;
 
         // 1. Authenticate Admin
         const { user: adminUser, supabase } = await getAuthenticatedAdmin();
 
         // 2. Rate Limit
         const limit = limiter.check(adminUser.id);
+        const rateLimitHeaders = getRateLimitHeaders(limit);
+
         if (limit.isRateLimited) {
-            return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+            return NextResponse.json(
+                { error: 'Rate limit exceeded' },
+                { status: 429, headers: rateLimitHeaders }
+            );
         }
 
-        if (!userId) {
-            return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
-        }
+        // userId is already validated by Zod schema
 
         // 3. Get job count before deletion (for audit log)
         const { count } = await supabase
@@ -62,10 +71,13 @@ export async function POST(request: NextRequest) {
             throw new Error('Action aborted: Audit logging failed');
         }
 
-        return NextResponse.json({
-            success: true,
-            message: 'User job count reset successfully. All jobs deleted.'
-        });
+        return NextResponse.json(
+            {
+                success: true,
+                message: 'User job count reset successfully. All jobs deleted.'
+            },
+            { headers: rateLimitHeaders }
+        );
     } catch (error) {
         console.error('Error in reset-usage API:', error);
 

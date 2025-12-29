@@ -169,8 +169,25 @@ export const rateLimit = (
                 isRateLimited,
                 currentUsage: currentEntry.count,
                 limit: checkLimit,
-                remaining: Math.max(0, checkLimit - currentEntry.count)
+                remaining: Math.max(0, checkLimit - currentEntry.count),
+                resetTime: currentEntry.resetTime // Unix timestamp in ms
             };
         },
     };
 };
+
+/**
+ * Helper to create rate limit headers for API responses
+ * Follows standard rate limit header conventions
+ */
+export function getRateLimitHeaders(rateLimitResult: {
+    limit: number;
+    remaining: number;
+    resetTime: number;
+}): Record<string, string> {
+    return {
+        'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+        'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+        'X-RateLimit-Reset': Math.floor(rateLimitResult.resetTime / 1000).toString(), // Unix timestamp in seconds
+    };
+}

@@ -1,14 +1,20 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedAdmin } from '@/src/utils/supabase/server';
-import { rateLimit } from '@/src/utils/rateLimit';
+import { rateLimit, getRateLimitHeaders } from '@/src/utils/rateLimit';
 import { logger } from '@/src/utils/logger';
+import { validateRequestBody, impersonateUserSchema } from '@/src/utils/validation/adminSchemas';
 
 // Strict rate limit for impersonation: 5 requests per minute per admin IP (or just per admin)
 const limiter = rateLimit(5);
 
 export async function POST(request: Request) {
     try {
-        const { userId } = await request.json();
+        // 0. Validate Request Body
+        const validation = await validateRequestBody(request, impersonateUserSchema);
+        if (!validation.success) {
+            return NextResponse.json({ error: validation.error }, { status: 400 });
+        }
+        const { userId } = validation.data;
 
         // 1. Authenticate & Authorize Admin
         // This helper handles checking cookies, checking the DB role, and throwing if invalid.
@@ -17,13 +23,16 @@ export async function POST(request: Request) {
 
         // 2. Rate Limit (Per Admin ID)
         const limit = limiter.check(adminUser.id);
+        const rateLimitHeaders = getRateLimitHeaders(limit);
+
         if (limit.isRateLimited) {
-            return NextResponse.json({ error: 'Too many requests. Please wait.' }, { status: 429 });
+            return NextResponse.json(
+                { error: 'Too many requests. Please wait.' },
+                { status: 429, headers: rateLimitHeaders }
+            );
         }
 
-        if (!userId) {
-            return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
-        }
+        // userId is already validated by Zod schema
 
         // 3. Get Target User Email
         const { data: targetUser, error: userError } = await adminClient.auth.admin.getUserById(userId);
@@ -64,9 +73,10 @@ export async function POST(request: Request) {
             throw new Error('Action aborted: Audit logging failed');
         }
 
-        return NextResponse.json({
-            url: linkData.properties.action_link
-        });
+        return NextResponse.json(
+            { url: linkData.properties.action_link },
+            { headers: rateLimitHeaders }
+        );
 
     } catch (error) {
         console.error('Error generating impersonation link:', error);

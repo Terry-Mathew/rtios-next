@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { JobInfo, SavedResume, UserProfile } from '@/src/types';
-import { Trash2, FileText, CheckCircle2, ArrowRight, Upload, Briefcase, Globe, User, RotateCcw, Edit2, Save, X } from 'lucide-react';
+import { Trash2, FileText, CheckCircle2, ArrowRight, Upload, Briefcase, Globe, User, RotateCcw, Edit2, Save, X, Sparkles } from 'lucide-react';
 import { updateUserProfile as updateUserProfileAction } from '@/src/domains/user/actions';
 
 interface DashboardProps {
@@ -168,8 +168,8 @@ const ProfileCard: React.FC<{ userProfile: UserProfile; onUpdateProfile: (p: Use
             )}
 
             {!isEditing && (
-                <p className="font-interstate text-xs text-text-secondary mt-auto pt-3 border-t border-white/5 opacity-60">
-                    Identity locked. Click edit to update.
+                <p className="font-body text-xs text-text-secondary mt-auto pt-3 border-t border-white/5 opacity-60">
+                    Profile secured. Click edit to update.
                 </p>
             )}
         </div>
@@ -209,9 +209,19 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div className="flex-1 flex flex-col bg-surface-base font-sans overflow-hidden">
 
             {/* Dashboard Header */}
-            <div className="p-8 border-b border-white/5 bg-surface-base">
-                <h1 className="font-tiempos text-3xl font-bold text-text-primary mb-2">Command Center</h1>
-                <p className="font-interstate text-sm text-text-secondary">Manage your active operative data and mission statuses.</p>
+            <div className="relative p-8 border-b border-slate-700/50 bg-gradient-to-r from-surface-base to-indigo-950/30 overflow-hidden">
+                {/* Ambient background effect */}
+                <div className="absolute top-0 right-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl"></div>
+
+                <div className="relative z-10">
+                    <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-accent to-accent-hover rounded-xl flex items-center justify-center">
+                            <Sparkles className="w-5 h-5 text-white" />
+                        </div>
+                        <h1 className="font-display text-4xl font-bold text-white">Career Hub</h1>
+                    </div>
+                    <p className="text-slate-400 text-lg font-body">Your career intelligence dashboard. Everything you need to land your next role.</p>
+                </div>
             </div>
 
             {/* Scrollable Content */}
@@ -221,12 +231,12 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <section>
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h2 className="font-tiempos text-xl font-bold text-text-primary flex items-center gap-2">
-                                <Briefcase className="w-5 h-5 text-accent" />
-                                Operative Profile
+                            <h2 className="font-display text-2xl font-bold text-white flex items-center gap-3">
+                                <Briefcase className="w-6 h-6 text-accent" />
+                                Professional Profile
                             </h2>
-                            <p className="font-interstate text-xs text-text-secondary mt-1">
-                                Your central dossier. These assets power all mission outputs.
+                            <p className="font-body text-sm text-slate-400 mt-2">
+                                Your career foundation. These documents power all AI-generated outputs.
                             </p>
                         </div>
                     </div>
@@ -311,20 +321,20 @@ const Dashboard: React.FC<DashboardProps> = ({
                 {/* SECTION 2: JOB APPLICATIONS */}
                 <section>
                     <div className="mb-6">
-                        <h2 className="font-tiempos text-xl font-bold text-text-primary flex items-center gap-2">
-                            <ArrowRight className="w-5 h-5 text-accent" />
-                            Mission Logs
+                        <h2 className="font-display text-2xl font-bold text-white flex items-center gap-3">
+                            <ArrowRight className="w-6 h-6 text-accent" />
+                            Applications
                         </h2>
-                        <p className="font-interstate text-xs text-text-secondary mt-1">
-                            Registry of active and archived mission data.
+                        <p className="font-body text-sm text-slate-400 mt-2">
+                            Track and manage all your job applications in one place.
                         </p>
                     </div>
 
                     <div className="rounded-lg border border-white/10 overflow-hidden bg-surface-elevated">
                         {/* Table Header */}
-                        <div className="grid grid-cols-12 gap-4 p-4 border-b border-white/10 bg-white/5 font-interstate text-xs font-bold text-text-secondary uppercase tracking-widest">
-                            <div className="col-span-5 md:col-span-5">Mission Name</div>
-                            <div className="col-span-4 md:col-span-4">Target Role</div>
+                        <div className="grid grid-cols-12 gap-4 p-4 border-b border-white/10 bg-white/5 font-body text-xs font-bold text-text-secondary uppercase tracking-widest">
+                            <div className="col-span-5 md:col-span-5">Application</div>
+                            <div className="col-span-4 md:col-span-4">Position</div>
                             <div className="col-span-3 md:col-span-3 text-right">Actions</div>
                         </div>
 
@@ -332,7 +342,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                         {jobs.length === 0 ? (
                             <div className="p-12 text-center flex flex-col items-center justify-center opacity-50">
                                 <Briefcase className="w-8 h-8 mb-3 text-text-secondary" />
-                                <p className="font-interstate text-sm text-text-secondary">No missions initialized.</p>
+                                <p className="font-body text-sm text-text-secondary">No applications yet. Create one to get started!</p>
                             </div>
                         ) : (
                             jobs.map((job) => (
@@ -348,11 +358,11 @@ const Dashboard: React.FC<DashboardProps> = ({
                                     ${activeJobId === job.id ? 'bg-accent/5' : ''}`}
                                 >
                                     <div className="col-span-5 md:col-span-5">
-                                        <div className={`font-tiempos text-base font-bold truncate pr-4 ${activeJobId === job.id ? 'text-accent' : 'text-text-primary'}`}>
-                                            {job.contextName || 'Untitled Mission'}
+                                        <div className={`font-display text-base font-bold truncate pr-4 ${activeJobId === job.id ? 'text-accent' : 'text-text-primary'}`}>
+                                            {job.contextName || 'Untitled Application'}
                                         </div>
-                                        <div className="font-interstate text-xs text-text-secondary mt-0.5">
-                                            Last Signal: {job.dateAdded ? new Date(job.dateAdded).toLocaleDateString() : '—'}
+                                        <div className="font-body text-xs text-text-secondary mt-0.5">
+                                            Last Updated: {job.dateAdded ? new Date(job.dateAdded).toLocaleDateString() : '—'}
                                         </div>
                                     </div>
 
@@ -363,11 +373,11 @@ const Dashboard: React.FC<DashboardProps> = ({
 
                                     <div className="col-span-3 md:col-span-3 flex items-center justify-end gap-3">
                                         {activeJobId === job.id ? (
-                                            <span className="text-[10px] font-interstate font-bold uppercase tracking-widest text-accent flex items-center gap-1">
+                                            <span className="text-[10px] font-body font-bold uppercase tracking-widest text-accent flex items-center gap-1">
                                                 Active <CheckCircle2 className="w-3 h-3" />
                                             </span>
                                         ) : (
-                                            <span className="text-[10px] font-interstate font-bold uppercase tracking-widest text-text-secondary group-hover:text-text-primary flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <span className="text-[10px] font-body font-bold uppercase tracking-widest text-text-secondary group-hover:text-text-primary flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 Open <ArrowRight className="w-3 h-3" />
                                             </span>
                                         )}

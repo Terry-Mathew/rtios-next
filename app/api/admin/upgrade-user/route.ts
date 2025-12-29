@@ -1,33 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedAdmin } from '@/src/utils/supabase/server';
-import { rateLimit } from '@/src/utils/rateLimit';
+import { rateLimit, getRateLimitHeaders } from '@/src/utils/rateLimit';
 import { logger } from '@/src/utils/logger';
+import { validateRequestBody, upgradeUserSchema } from '@/src/utils/validation/adminSchemas';
 
 // Moderate rate limit: 20 upgrades per minute
 const limiter = rateLimit(20);
 
 export async function POST(request: NextRequest) {
     try {
-        const { userId, role } = await request.json();
+        // 0. Validate Request Body
+        const validation = await validateRequestBody(request, upgradeUserSchema);
+        if (!validation.success) {
+            return NextResponse.json({ error: validation.error }, { status: 400 });
+        }
+        const { userId, role } = validation.data;
 
         // 1. Authenticate Admin
         const { user: adminUser, supabase } = await getAuthenticatedAdmin();
 
         // 2. Rate Limit
         const limit = limiter.check(adminUser.id);
+        const rateLimitHeaders = getRateLimitHeaders(limit);
+
         if (limit.isRateLimited) {
-            return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+            return NextResponse.json(
+                { error: 'Rate limit exceeded' },
+                { status: 429, headers: rateLimitHeaders }
+            );
         }
 
-        if (!userId || !role) {
-            return NextResponse.json({ error: 'Missing userId or role' }, { status: 400 });
-        }
-
-        // 3. Validate role
-        const validRoles = ['user', 'admin'];
-        if (!validRoles.includes(role)) {
-            return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
-        }
+        // userId and role are already validated by Zod schema (only 'user' or 'admin' allowed)
 
         // 4. Update User Role
         const { error } = await supabase
@@ -62,7 +65,10 @@ export async function POST(request: NextRequest) {
             throw new Error('Action aborted: Audit logging failed');
         }
 
-        return NextResponse.json({ success: true, message: `User role updated to ${role}` });
+        return NextResponse.json(
+            { success: true, message: `User role updated to ${role}` },
+            { headers: rateLimitHeaders }
+        );
     } catch (error) {
         console.error('Error in upgrade-user API:', error);
 

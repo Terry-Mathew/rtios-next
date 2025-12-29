@@ -91,7 +91,7 @@ export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
                         ? 'text-accent'
                         : 'text-text-secondary group-hover:text-text-primary'
                         }`} />
-                    <span className="text-[8px] lg:text-[9px] font-interstate uppercase font-bold text-center">Command</span>
+                    <span className="text-[8px] lg:text-[9px] font-body uppercase font-bold text-center">Hub</span>
                 </button>
 
                 {/* Divider - Only on desktop */}
@@ -109,7 +109,7 @@ export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
                         ? 'text-accent'
                         : 'text-text-secondary group-hover:text-text-primary'
                         }`} />
-                    <span className="text-[8px] lg:text-[9px] font-interstate uppercase font-bold">Pitch</span>
+                    <span className="text-[8px] lg:text-[9px] font-body uppercase font-bold">Story</span>
                 </button>
 
                 {/* LinkedIn Button */}
@@ -124,7 +124,7 @@ export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
                         ? 'text-accent'
                         : 'text-text-secondary group-hover:text-text-primary'
                         }`} />
-                    <span className="text-[8px] lg:text-[9px] font-interstate uppercase font-bold">Signal</span>
+                    <span className="text-[8px] lg:text-[9px] font-body uppercase font-bold">Outreach</span>
                 </button>
 
                 {/* Interview Prep Button */}
@@ -139,7 +139,7 @@ export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
                         ? 'text-accent'
                         : 'text-text-secondary group-hover:text-text-primary'
                         }`} />
-                    <span className="text-[8px] lg:text-[9px] font-interstate uppercase font-bold text-center">War Room</span>
+                    <span className="text-[8px] lg:text-[9px] font-body uppercase font-bold text-center">Prep</span>
                 </button>
 
                 {/* Admin Button - Only visible to admins */}
@@ -157,7 +157,7 @@ export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
                                 ? 'text-red-400'
                                 : 'text-red-400/60 group-hover:text-red-400'
                                 }`} />
-                            <span className="text-[8px] lg:text-[9px] font-interstate uppercase font-bold">Admin</span>
+                            <span className="text-[8px] lg:text-[9px] font-body uppercase font-bold">Admin</span>
                         </button>
                     </>
                 )}
