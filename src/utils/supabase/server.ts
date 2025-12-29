@@ -42,9 +42,9 @@ export async function getAuthenticatedUser(): Promise<{ user: User, supabase: Su
 
 // Helper to create Admin Client (Service Role)
 export async function createSupabaseAdminClient() {
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
-  if (!serviceRoleKey) {
-    throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY');
+  const secretKey = process.env.SUPABASE_SECRET_KEY;
+  if (!secretKey) {
+    throw new Error('Missing SUPABASE_SECRET_KEY');
   }
 
   // Note: We do NOT pass cookies here because this is for Admin actions, not user actions.
@@ -52,7 +52,7 @@ export async function createSupabaseAdminClient() {
   const { createClient } = await import('@supabase/supabase-js');
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    serviceRoleKey,
+    secretKey,
     {
       auth: {
         autoRefreshToken: false,
@@ -67,8 +67,12 @@ export async function getAuthenticatedAdmin(): Promise<{ user: User, supabase: S
   // 1. Get standard user
   const { user, supabase } = await getAuthenticatedUser();
 
-  // 2. Verify Role via public.users
-  const { data: roleData, error } = await supabase
+  // 2. Create admin client first (for secure role verification)
+  const adminClient = await createSupabaseAdminClient();
+
+  // 3. Verify role using service role client (bypasses RLS - secure)
+  // SECURITY: Using adminClient ensures role check cannot be bypassed via RLS misconfiguration
+  const { data: roleData, error } = await adminClient
     .from('users')
     .select('role')
     .eq('id', user.id)
@@ -79,7 +83,6 @@ export async function getAuthenticatedAdmin(): Promise<{ user: User, supabase: S
     throw new Error('Forbidden: Admin Access Required');
   }
 
-  // 3. Return user + admin client (for elevated actions)
-  const adminClient = await createSupabaseAdminClient();
+  // 4. Return user + admin client (for elevated actions)
   return { user, supabase, adminClient };
 }

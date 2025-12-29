@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedAdmin } from '@/src/utils/supabase/server';
 import { rateLimit } from '@/src/utils/rateLimit';
+import { logger } from '@/src/utils/logger';
 
 // Moderate rate limit: 20 upgrades per minute
 const limiter = rateLimit(20);
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 5. Log Audit Trail
-        await supabase
+        const { error: auditError } = await supabase
             .from('audit_logs')
             .insert([{
                 actor_user_id: adminUser.id,
@@ -49,6 +50,17 @@ export async function POST(request: NextRequest) {
                 entity_id: userId,
                 metadata: { new_role: role }
             }]);
+
+        if (auditError) {
+            logger.error('CRITICAL: Audit log failed', {
+                action: 'upgrade_user_role',
+                userId,
+                newRole: role,
+                adminUserId: adminUser.id,
+                error: auditError
+            });
+            throw new Error('Action aborted: Audit logging failed');
+        }
 
         return NextResponse.json({ success: true, message: `User role updated to ${role}` });
     } catch (error) {

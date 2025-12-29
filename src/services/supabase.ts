@@ -22,11 +22,11 @@ export const getSupabaseBrowser = (): SupabaseClient => {
   if (_supabaseBrowser) return _supabaseBrowser;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   if (!url || !key) {
     throw new Error(
-      'Supabase configuration missing. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (or NEXT_PUBLIC_SUPABASE_ANON_KEY) in .env.local'
+      'Supabase configuration missing. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY in .env.local'
     );
   }
 
@@ -44,7 +44,7 @@ export const supabaseBrowser: SupabaseClient = new Proxy({} as SupabaseClient, {
 
 export const getSupabaseServer = (): SupabaseClient => {
   const url = getEnv('SUPABASE_URL')
-  const key = getAnyEnv(['SUPABASE_SECRET_KEY', 'SUPABASE_SERVICE_ROLE_KEY'])
+  const key = getEnv('SUPABASE_SECRET_KEY')
   return createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: { headers: { 'x-client': 'rtios-next' } },

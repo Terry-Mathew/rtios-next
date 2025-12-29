@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedAdmin } from '@/src/utils/supabase/server';
 import { rateLimit } from '@/src/utils/rateLimit';
+import { logger } from '@/src/utils/logger';
 
 // Strict rate limiter: 10 bans per minute
 const limiter = rateLimit(10);
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
         if (error) throw error;
 
         // 4. Log Audit Trail
-        await supabase
+        const { error: auditError } = await supabase
             .from('audit_logs')
             .insert([{
                 actor_user_id: adminUser.id,
@@ -40,6 +41,17 @@ export async function POST(request: Request) {
                 entity_id: userId,
                 metadata: { status }
             }]);
+
+        if (auditError) {
+            logger.error('CRITICAL: Audit log failed', {
+                action: status === 'banned' ? 'ban_user' : 'unban_user',
+                userId,
+                status,
+                adminUserId: adminUser.id,
+                error: auditError
+            });
+            throw new Error('Action aborted: Audit logging failed');
+        }
 
         return NextResponse.json({ success: true });
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedAdmin } from '@/src/utils/supabase/server';
 import { rateLimit } from '@/src/utils/rateLimit';
+import { logger } from '@/src/utils/logger';
 
 // Strict rate limiter: 5 deletes per minute
 const limiter = rateLimit(5);
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 5. Log Audit Trail
-        await supabase
+        const { error: auditError } = await supabase
             .from('audit_logs')
             .insert([{
                 actor_user_id: adminUser.id,
@@ -49,6 +50,17 @@ export async function POST(request: NextRequest) {
                 entity_id: userId,
                 metadata: { jobs_deleted: count || 0 }
             }]);
+
+        if (auditError) {
+            logger.error('CRITICAL: Audit log failed', {
+                action: 'reset_user_usage',
+                userId,
+                jobsDeleted: count || 0,
+                adminUserId: adminUser.id,
+                error: auditError
+            });
+            throw new Error('Action aborted: Audit logging failed');
+        }
 
         return NextResponse.json({
             success: true,

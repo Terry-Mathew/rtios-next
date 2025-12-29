@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedAdmin } from '@/src/utils/supabase/server';
 import { rateLimit } from '@/src/utils/rateLimit';
+import { logger } from '@/src/utils/logger';
 
 // Strict rate limiter: 5 deletes per minute (prevent mass wiper)
 const limiter = rateLimit(5);
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
         }
 
         // 3. Log Audit Trail (before deletion)
-        await adminClient
+        const { error: auditError } = await adminClient
             .from('audit_logs')
             .insert([{
                 actor_user_id: adminUser.id,
@@ -32,6 +33,16 @@ export async function POST(request: Request) {
                 entity_id: userId,
                 metadata: {}
             }]);
+
+        if (auditError) {
+            logger.error('CRITICAL: Audit log failed', {
+                action: 'delete_user',
+                userId,
+                adminUserId: adminUser.id,
+                error: auditError
+            });
+            throw new Error('Action aborted: Audit logging failed');
+        }
 
         // 4. Delete from Auth (requires Service Role)
         const { error } = await adminClient.auth.admin.deleteUser(userId);

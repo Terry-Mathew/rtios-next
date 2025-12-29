@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedAdmin } from '@/src/utils/supabase/server';
 import { rateLimit } from '@/src/utils/rateLimit';
+import { logger } from '@/src/utils/logger';
 
 // Strict rate limit for impersonation: 5 requests per minute per admin IP (or just per admin)
 const limiter = rateLimit(5);
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
         }
 
         // 5. Log Audit Trail
-        await adminClient
+        const { error: auditError } = await adminClient
             .from('audit_logs')
             .insert([{
                 actor_user_id: adminUser.id,
@@ -51,6 +52,17 @@ export async function POST(request: Request) {
                 entity_id: userId,
                 metadata: { target_email: targetUser.user.email }
             }]);
+
+        if (auditError) {
+            logger.error('CRITICAL: Audit log failed', {
+                action: 'impersonate_user',
+                userId,
+                targetEmail: targetUser.user.email,
+                adminUserId: adminUser.id,
+                error: auditError
+            });
+            throw new Error('Action aborted: Audit logging failed');
+        }
 
         return NextResponse.json({
             url: linkData.properties.action_link
