@@ -40,7 +40,7 @@ KV_REST_API_TOKEN=...
 
 **Example**:
 ```env
-GEMINI_API_KEY=AIzaSyDAzmV1dclvgqnz5Y-O9Jiw2CEyJPa5paI
+GEMINI_API_KEY=your_actual_gemini_api_key_here
 ```
 
 ---
